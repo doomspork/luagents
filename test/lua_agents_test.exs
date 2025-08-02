@@ -1,8 +1,10 @@
-defmodule LuaAgentsTest do
+defmodule LuagentsTest do
   use ExUnit.Case
-  doctest LuaAgents
+  doctest Luagents
 
-  test "greets the world" do
-    assert LuaAgents.hello() == :world
+  test "builtin tools are available" do
+    tools = Luagents.builtin_tools()
+    assert is_map(tools)
+    assert Map.has_key?(tools, "add")
   end
 end
