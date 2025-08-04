@@ -39,11 +39,9 @@ defmodule Luagents.Tool do
 
   @spec execute(t(), list(any())) :: {:ok, any()} | {:error, any()}
   def execute(%__MODULE__{function: function}, args) do
-    try do
-      function.(args)
-    rescue
-      e -> {:error, Exception.format(:error, e, __STACKTRACE__)}
-    end
+    function.(args)
+  rescue
+    e -> {:error, Exception.format(:error, e, __STACKTRACE__)}
   end
 
   def format_for_prompt(%__MODULE__{} = tool) do

@@ -36,7 +36,7 @@ defmodule Luagents do
 
   """
 
-  alias Luagents.{Agent, Tool, LLM, Memory}
+  alias Luagents.{Agent, LLM, Memory, Tool}
 
   ## Public API
 

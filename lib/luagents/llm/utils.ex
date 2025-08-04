@@ -10,14 +10,15 @@ defmodule Luagents.LLM.Utils do
   def extract_lua_code(text) do
     # First try to extract from lua code blocks
     case Regex.run(~r/```lua\s*(.*?)\s*```/s, text, capture: :all_but_first) do
-      [code] -> 
+      [code] ->
         String.trim(code)
-        
+
       _ ->
         # Try generic code blocks
         case Regex.run(~r/```\s*(.*?)\s*```/s, text, capture: :all_but_first) do
           [code] -> String.trim(code)
-          _ -> text  # Return original text if no code blocks found
+          # Return original text if no code blocks found
+          _ -> text
         end
     end
   end
@@ -29,7 +30,7 @@ defmodule Luagents.LLM.Utils do
   def format_error(error, provider) when is_binary(error) do
     "#{provider} error: #{error}"
   end
-  
+
   def format_error(error, provider) do
     "#{provider} error: #{inspect(error)}"
   end
@@ -42,12 +43,12 @@ defmodule Luagents.LLM.Utils do
   def base_system_prompt do
     """
     You are an expert ReAct agent who can solve any task using Lua code.
-    
+
     You have access to these special functions:
     - thought(message): Log your reasoning process
     - observation(message): Note what you observe
     - final_answer(answer): Provide the final answer
-    
+
     Your response should be a single Lua code block.
     """
   end

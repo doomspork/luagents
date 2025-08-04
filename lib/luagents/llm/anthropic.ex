@@ -74,10 +74,12 @@ defmodule Luagents.LLM.Anthropic do
         extract_lua_code(response)
 
       {:ok, %{"content" => content}} when is_list(content) ->
-        text = Enum.map_join(content, "\n", fn
-          %{"text" => t} -> t
-          _ -> ""
-        end)
+        text =
+          Enum.map_join(content, "\n", fn
+            %{"text" => t} -> t
+            _ -> ""
+          end)
+
         extract_lua_code(text)
 
       {:error, error} ->
@@ -101,7 +103,9 @@ defmodule Luagents.LLM.Anthropic do
   defp extract_lua_code(text) do
     # Extract Lua code from markdown code blocks
     case Regex.run(~r/```lua\s*(.*?)\s*```/s, text, capture: :all_but_first) do
-      [code] -> {:ok, String.trim(code)}
+      [code] ->
+        {:ok, String.trim(code)}
+
       _ ->
         # If no lua block found, check for generic code block
         case Regex.run(~r/```\s*(.*?)\s*```/s, text, capture: :all_but_first) do
@@ -115,10 +119,13 @@ defmodule Luagents.LLM.Anthropic do
     case error do
       %{message: message} when is_binary(message) ->
         "Anthropic API error: #{message}"
+
       %{reason: reason} when is_binary(reason) ->
         "Anthropic API error: #{reason}"
+
       error when is_exception(error) ->
         "Anthropic API error: #{Exception.message(error)}"
+
       error ->
         "Anthropic API error: #{inspect(error)}"
     end

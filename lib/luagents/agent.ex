@@ -3,7 +3,7 @@ defmodule Luagents.Agent do
   Core ReAct agent that thinks using Lua code.
   Inspired by smolagents but uses Lua for reasoning.
   """
-  alias Luagents.{Memory, LLM, LuaEngine}
+  alias Luagents.{LLM, LuaEngine, Memory}
 
   defstruct [
     :llm,
