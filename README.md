@@ -146,4 +146,4 @@ Once you've made your additions and `mix test` passes, go ahead and open a PR!
 ## License
 
 Luagents is Copyright © 2025 doomspork. It is free software, and may be
-redistributed under the terms specified in the [LICENSE](/LICENSE) file.
+redistributed under the terms specified in the [LICENSE](/LICENSE.md) file.
