@@ -1,10 +1,10 @@
 # Luagents
 
-[![Continuous Integration](https://github.com/doomspork/luagents/actions/workflows/ci.yaml/badge.svg)](https://github.com/doomspork/luagents/actions/workflows/ci.yaml)
-[![Module Version](https://img.shields.io/hexpm/v/ex_machina.svg)](https://hex.pm/packages/luagents)
+[![Continuous Integration](https://github.com/doomspork/luagents/actions/workflows/ci.yml/badge.svg)](https://github.com/doomspork/luagents/actions/workflows/ci.yaml)
+[![Module Version](https://img.shields.io/hexpm/v/luagents.svg)](https://hex.pm/packages/luagents)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/luagents/)
-[![Total Download](https://img.shields.io/hexpm/dt/ex_machina.svg)](https://hex.pm/packages/luagents)
-[![License](https://img.shields.io/hexpm/l/ex_machina.svg)](https://github.com/doomspork/luagents/blob/master/LICENSE)
+[![Total Download](https://img.shields.io/hexpm/dt/luagents.svg)](https://hex.pm/packages/luagents)
+[![License](https://img.shields.io/hexpm/l/luagents.svg)](https://github.com/doomspork/luagents/blob/master/LICENSE)
 [![Last Updated](https://img.shields.io/github/last-commit/doomspork/luagents.svg)](https://github.com/doomspork/luagents/commits/master)
 
 A ReAct (Reasoning and Acting) agent implementation in Elixir that thinks using Lua code. Inspired by [smolagents](https://github.com/huggingface/smolagents).
@@ -146,4 +146,4 @@ Once you've made your additions and `mix test` passes, go ahead and open a PR!
 ## License
 
 Luagents is Copyright © 2025 doomspork. It is free software, and may be
-redistributed under the terms specified in the [LICENSE](/LICENSE) file.
+redistributed under the terms specified in the [LICENSE](/LICENSE.md) file.
