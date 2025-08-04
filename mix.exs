@@ -19,15 +19,15 @@ defmodule Luagents.MixProject do
 
   defp deps do
     [
-      {:lua, "~> 0.3.0"},
       {:anthropix, "~> 0.6"},
+      {:lua, "~> 0.3.0"},
       {:ollama, "0.8.0"},
 
       # Dev & Test dependencies
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.18", only: :test},
-      {:ex_doc, "~> 0.30", only: :dev, runtime: false}
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.30", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.18", only: :test}
     ]
   end
 end
