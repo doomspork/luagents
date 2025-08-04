@@ -61,16 +61,27 @@ defmodule Luagents.LuaEngine do
   end
 
   defp inject_tools(state, tools) do
-    Enum.reduce(tools, state, fn {name, tool}, acc_state ->
-      Lua.set!(acc_state, [name], create_tool_wrapper(tool))
+    Enum.reduce(tools, state, fn
+      {name, tool}, acc_state when is_function(tool.function) ->
+        Lua.set!(acc_state, [name], create_tool_wrapper(tool))
+
+      {_name, tool}, acc_state when is_atom(tool.api) ->
+        Lua.load_api(acc_state, tool.api)
+
+      _, acc_state ->
+        acc_state
     end)
   end
 
   defp create_tool_wrapper(tool) do
     fn args ->
-      case Luagents.Tool.execute(tool, args) do
-        {:ok, result} -> result
-        {:error, _error} -> nil
+      try do
+        case tool.function.(args) do
+          {:ok, result} -> result
+          {:error, _error} -> nil
+        end
+      rescue
+        e -> {:error, Exception.format(:error, e, __STACKTRACE__)}
       end
     end
   end

@@ -23,7 +23,7 @@ defmodule Luagents.LLM do
   @type provider :: :anthropic | :ollama
   @type t :: Anthropic.t() | Ollama.t()
 
-  @default_provider :anthropic
+  @default_provider :ollama
 
   @doc """
   Create a new LLM instance with the specified provider.

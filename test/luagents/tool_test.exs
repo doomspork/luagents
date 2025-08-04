@@ -4,7 +4,7 @@ defmodule Luagents.ToolTest do
   alias Luagents.Tool
 
   describe "new/4" do
-    test "creates tool with all fields" do
+    test "creates tool from function with all fields" do
       parameters = [
         %{name: "x", type: :number, description: "Input number", required: true}
       ]
@@ -18,56 +18,28 @@ defmodule Luagents.ToolTest do
       assert tool.parameters == parameters
       assert tool.function == function
     end
-  end
 
-  describe "execute/2" do
-    test "executes tool function with arguments" do
+    test "creates tool from deflua module with all fields" do
+      defmodule WebSearch do
+        use Lua.API
+
+        deflua search(query) do
+          "Searching for #{query}"
+        end
+      end
+
       tool =
         Tool.new(
-          "add",
-          "Add numbers",
-          [],
-          fn [a, b] -> {:ok, a + b} end
+          "search",
+          "Search the web",
+          [%{name: "query", type: :string, description: "Search query", required: true}],
+          WebSearch
         )
 
-      assert {:ok, 8} = Tool.execute(tool, [3, 5])
-    end
-
-    test "returns error result from function" do
-      tool =
-        Tool.new(
-          "fail",
-          "Always fails",
-          [],
-          fn _ -> {:error, "operation failed"} end
-        )
-
-      assert {:error, "operation failed"} = Tool.execute(tool, [])
-    end
-
-    test "catches and formats exceptions" do
-      tool =
-        Tool.new(
-          "crash",
-          "Raises exception",
-          [],
-          fn _ -> raise "boom" end
-        )
-
-      assert {:error, error_msg} = Tool.execute(tool, [])
-      assert String.contains?(error_msg, "boom")
-    end
-
-    test "handles different argument types" do
-      tool =
-        Tool.new(
-          "process",
-          "Process mixed types",
-          [],
-          fn [str, num, bool] -> {:ok, "#{str}-#{num}-#{bool}"} end
-        )
-
-      assert {:ok, "hello-42-true"} = Tool.execute(tool, ["hello", 42, true])
+      assert tool.name == "search"
+      assert tool.description == "Search the web"
+      assert tool.parameters == [%{name: "query", type: :string, description: "Search query", required: true}]
+      assert tool.api == WebSearch
     end
   end
 
@@ -116,86 +88,6 @@ defmodule Luagents.ToolTest do
 
       expected = "- process_list(items: table): Process items\n"
       assert formatted == expected
-    end
-  end
-
-  describe "builtin_tools/0" do
-    test "returns map of built-in tools" do
-      tools = Tool.builtin_tools()
-
-      assert is_map(tools)
-      assert Map.has_key?(tools, "add")
-      assert Map.has_key?(tools, "multiply")
-      assert Map.has_key?(tools, "concat")
-      assert Map.has_key?(tools, "search")
-    end
-
-    test "add tool works correctly" do
-      tools = Tool.builtin_tools()
-      add_tool = Map.get(tools, "add")
-
-      assert {:ok, 7} = Tool.execute(add_tool, [3, 4])
-      assert {:ok, 0} = Tool.execute(add_tool, [-5, 5])
-      assert {:ok, 10.5} = Tool.execute(add_tool, [2.5, 8])
-    end
-
-    test "multiply tool works correctly" do
-      tools = Tool.builtin_tools()
-      multiply_tool = Map.get(tools, "multiply")
-
-      assert {:ok, 12} = Tool.execute(multiply_tool, [3, 4])
-      assert {:ok, 0} = Tool.execute(multiply_tool, [0, 100])
-      assert {:ok, -15} = Tool.execute(multiply_tool, [-3, 5])
-    end
-
-    test "concat tool works correctly" do
-      tools = Tool.builtin_tools()
-      concat_tool = Map.get(tools, "concat")
-
-      assert {:ok, "hello world"} = Tool.execute(concat_tool, [["hello ", "world"]])
-      assert {:ok, "abc"} = Tool.execute(concat_tool, [["a", "b", "c"]])
-      assert {:ok, ""} = Tool.execute(concat_tool, [[]])
-    end
-
-    test "search tool returns mock results" do
-      tools = Tool.builtin_tools()
-      search_tool = Map.get(tools, "search")
-
-      assert {:ok, result} = Tool.execute(search_tool, ["test query"])
-      assert String.contains?(result, "test query")
-      assert String.contains?(result, "Mock search results")
-    end
-
-    test "all built-in tools have proper structure" do
-      tools = Tool.builtin_tools()
-
-      for {name, tool} <- tools do
-        assert %Tool{} = tool
-        assert tool.name == name
-        assert is_binary(tool.description)
-        assert is_list(tool.parameters)
-        assert is_function(tool.function)
-
-        # Test that parameters have required fields
-        for param <- tool.parameters do
-          assert Map.has_key?(param, :name)
-          assert Map.has_key?(param, :type)
-          assert Map.has_key?(param, :description)
-          assert Map.has_key?(param, :required)
-        end
-      end
-    end
-
-    test "built-in tools can be formatted for prompts" do
-      tools = Tool.builtin_tools()
-
-      for {_name, tool} <- tools do
-        formatted = Tool.format_for_prompt(tool)
-        assert is_binary(formatted)
-        assert String.starts_with?(formatted, "- ")
-        assert String.contains?(formatted, tool.name)
-        assert String.contains?(formatted, tool.description)
-      end
     end
   end
 

@@ -5,19 +5,21 @@ Mix.install([
 
 alias Luagents.Agent
 
-# Create custom tools
-power_tool = Luagents.create_tool(
-  "power",
-  "Calculate power",
-  [
+defmodule PowerTool do
+  use Lua.API
+
+  deflua power(base, exp) do
+    :math.pow(base, exp)
+  end
+end
+
+tools = %{
+  power: Luagents.Tool.new("power", "Calculate power", [
     %{name: "base", type: :number, description: "Base", required: true},
     %{name: "exp", type: :number, description: "Exponent", required: true}
-  ],
-  fn [base, exp] -> {:ok, :math.pow(base, exp)} end
-)
+  ], PowerTool)
+}
 
-# Add to existing tools
-tools = Map.put(Luagents.builtin_tools(), "power", power_tool)
 opts = [
   name: "MathBot",
   llm: Luagents.create_llm(:ollama, model: "llama3.1"),

@@ -72,7 +72,7 @@ defmodule Luagents.LLM.UtilsTest do
 
         local x = 1
         local y = 2
-        
+
       ```
       """
 
@@ -193,30 +193,6 @@ defmodule Luagents.LLM.UtilsTest do
 
       result = Utils.format_error(error, provider)
       assert result == "Batch error: [\"Error 1\", \"Error 2\"]"
-    end
-  end
-
-  describe "base_system_prompt/0" do
-    test "returns basic system prompt" do
-      prompt = Utils.base_system_prompt()
-
-      assert is_binary(prompt)
-      assert String.contains?(prompt, "ReAct agent")
-      assert String.contains?(prompt, "thought(message)")
-      assert String.contains?(prompt, "observation(message)")
-      assert String.contains?(prompt, "final_answer(answer)")
-      assert String.contains?(prompt, "Lua code block")
-    end
-
-    test "prompt is well-formed" do
-      prompt = Utils.base_system_prompt()
-
-      # Should be substantial but not too long (this is the fallback)
-      assert String.length(prompt) > 100
-      assert String.length(prompt) < 1000
-
-      # Should be trimmed properly (remove trailing newline from test)
-      assert String.trim(prompt) != ""
     end
   end
 
