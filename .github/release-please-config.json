@@ -28,6 +28,8 @@
       }
     ],
     "prerelease": false,
+    "bump-minor-pre-major": true,
+    "bump-patch-for-minor-pre-major": true,
     "pull-request-header": "An automated release has been created for you.",
     "separate-pull-requests": true
   }
