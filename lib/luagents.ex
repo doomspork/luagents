@@ -47,8 +47,8 @@ defmodule Luagents do
 
   ## Options
 
-  - `:tools` - Map of tools to provide to the agent (defaults to builtin tools)
-  - `:llm` - LLM instance to use (defaults to Anthropic)
+  - `:tools` - Map of tools to provide to the agent
+  - `:llm` - LLM instance to use (defaults to Ollama)
   - `:max_iterations` - Maximum reasoning iterations (default: 10)
   - `:name` - Agent name for identification
 
@@ -94,14 +94,13 @@ defmodule Luagents do
       )
 
       # Agent with custom tools
-      tools = Map.put(Luagents.builtin_tools(), "custom", my_tool)
-      agent = Luagents.create_agent(tools: tools)
+      agent = Luagents.create_agent(tools: %{
+        "custom" => Luagents.create_tool("custom", "Custom tool", [], fn _ -> "Custom tool" end)
+      })
 
   """
   @spec create_agent(Keyword.t()) :: Agent.t()
   def create_agent(opts \\ []) do
-    opts = Keyword.put_new(opts, :tools, Tool.builtin_tools())
-
     Agent.new(opts)
   end
 
@@ -136,10 +135,7 @@ defmodule Luagents do
 
   ## Examples
 
-      # Default Anthropic Claude
-      llm = Luagents.create_llm(:anthropic)
-
-      # Specific Claude model
+      # Anthropic Claude model
       llm = Luagents.create_llm(:anthropic, model: "claude-3-haiku-20240307")
 
       # Ollama with local model
@@ -166,21 +162,6 @@ defmodule Luagents do
   @spec llm_providers() :: [LLM.provider()]
   def llm_providers, do: LLM.providers()
 
-  ## Tool Management
-
-  @doc """
-  Get the map of built-in tools.
-
-  ## Examples
-
-      iex> tools = Luagents.builtin_tools()
-      iex> Map.keys(tools) |> Enum.sort()
-      ["add", "concat", "multiply", "search"]
-
-  """
-  @spec builtin_tools() :: %{String.t() => Tool.t()}
-  def builtin_tools, do: Tool.builtin_tools()
-
   @doc """
   Create a custom tool for use with agents.
 
@@ -189,7 +170,7 @@ defmodule Luagents do
   - `name` - Tool name (used in Lua code)
   - `description` - Human-readable description
   - `parameters` - List of parameter specifications
-  - `function` - Function that executes the tool
+  - `function_or_api` - Function that executes the tool or a module that implements the deflua API
 
   ## Examples
 
@@ -198,7 +179,7 @@ defmodule Luagents do
         "greet",
         "Say hello",
         [],
-        fn _ -> {:ok, "Hello, World!"} end
+        fn _ -> "Hello, World!" end
       )
 
       # Tool with parameters
@@ -209,30 +190,30 @@ defmodule Luagents do
           %{name: "base", type: :number, description: "Base number", required: true},
           %{name: "exponent", type: :number, description: "Exponent", required: true}
         ],
-        fn [base, exp] -> {:ok, :math.pow(base, exp)} end
+        fn [base, exp] -> :math.pow(base, exp) end
+      )
+
+      # Tool with deflua macro API
+      defmodule WebSearch do
+        use Lua.API
+
+        deflua search(query) do
+          # Implement search logic here
+        end
+      end
+
+      tool = Luagents.create_tool(
+        "search",
+        "Search the web",
+        [%{name: "query", type: :string, description: "Search query", required: true}],
+        WebSearch
       )
 
   """
-  @spec create_tool(String.t(), String.t(), [Tool.parameter()], Tool.func()) :: Tool.t()
-  def create_tool(name, description, parameters, function) do
-    Tool.new(name, description, parameters, function)
+  @spec create_tool(String.t(), String.t(), [Tool.parameter()], Tool.func() | Tool.api()) :: Tool.t()
+  def create_tool(name, description, parameters, function_or_api) do
+    Tool.new(name, description, parameters, function_or_api)
   end
-
-  @doc """
-  List available tool names from a tool map.
-
-  ## Examples
-
-      iex> Luagents.list_tools(Luagents.builtin_tools()) |> Enum.sort()
-      ["add", "concat", "multiply", "search"]
-
-  """
-  @spec list_tools(%{String.t() => Tool.t()}) :: [String.t()]
-  def list_tools(tools) when is_map(tools) do
-    Map.keys(tools)
-  end
-
-  ## Agent Introspection
 
   @doc """
   Get the current memory state of an agent.
@@ -286,49 +267,5 @@ defmodule Luagents do
   @spec reset_agent_memory(Agent.t()) :: Agent.t()
   def reset_agent_memory(%Agent{} = agent) do
     %{agent | memory: Memory.new()}
-  end
-
-  ## Convenience Functions
-
-  @doc """
-  Quick test if the system is working with a simple math problem.
-
-  ## Examples
-
-      iex> case Luagents.test() do
-      ...>   {:ok, _result} -> :ok
-      ...>   {:error, "Ollama error: " <> _} -> :ok  # Expected when Ollama not running
-      ...>   {:error, reason} -> {:error, reason}
-      ...> end
-      :ok
-
-  """
-  @spec test() :: {:ok, String.t()} | {:error, String.t()}
-  def test do
-    run("What is 2 + 2? Use the add tool to calculate this.")
-  end
-
-  @doc """
-  Get version information and status.
-
-  ## Examples
-
-      iex> Luagents.status()
-      %{
-        version: "0.1.0",
-        llm_providers: [:anthropic, :ollama],
-        builtin_tools: ["add", "concat", "multiply", "search"],
-        default_max_iterations: 10
-      }
-
-  """
-  @spec status() :: map()
-  def status do
-    %{
-      version: Application.spec(:luagents, :vsn) |> to_string(),
-      llm_providers: llm_providers(),
-      builtin_tools: list_tools(builtin_tools()) |> Enum.sort(),
-      default_max_iterations: 10
-    }
   end
 end

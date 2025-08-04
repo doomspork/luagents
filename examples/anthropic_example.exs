@@ -186,9 +186,3 @@ defmodule AnthropicExample do
 end
 
 AnthropicExample.run()
-
-IO.puts("\n✨ Example completed!")
-IO.puts("\n💡 Tips:")
-IO.puts("   - Claude excels at step-by-step reasoning")
-IO.puts("   - Lower temperature (0.1-0.3) for math, higher (0.5-0.8) for creativity")
-IO.puts("   - Check usage at: https://console.anthropic.com/")

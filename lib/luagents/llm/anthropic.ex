@@ -3,6 +3,8 @@ defmodule Luagents.LLM.Anthropic do
   Anthropic Claude LLM implementation for the ReAct agent.
   """
 
+  alias Luagents.LLM.Utils
+
   @behaviour Luagents.LLM.Behaviour
 
   defstruct [
@@ -71,7 +73,7 @@ defmodule Luagents.LLM.Anthropic do
 
     case Anthropix.chat(llm.client, final_options) do
       {:ok, %{"content" => [%{"text" => response} | _]}} ->
-        extract_lua_code(response)
+        Utils.extract_lua_code(response)
 
       {:ok, %{"content" => content}} when is_list(content) ->
         text =
@@ -80,7 +82,7 @@ defmodule Luagents.LLM.Anthropic do
             _ -> ""
           end)
 
-        extract_lua_code(text)
+        Utils.extract_lua_code(text)
 
       {:error, error} ->
         {:error, format_anthropic_error(error)}
@@ -88,31 +90,15 @@ defmodule Luagents.LLM.Anthropic do
   end
 
   defp get_api_key(opts) do
-    # Priority: 1. Passed option, 2. Environment variable, 3. Application config
+    # Priority: 1. Passed option, 2. Environment variable
     Keyword.get(opts, :api_key) ||
       System.get_env("ANTHROPIC_API_KEY") ||
-      Application.get_env(:luagents, :anthropic_api_key) ||
       raise ArgumentError, """
       Anthropic API key not found. Please provide it via one of:
       1. Pass as option: Luagents.create_llm(:anthropic, api_key: "your-key")
       2. Set environment variable: export ANTHROPIC_API_KEY="your-key"
       3. Configure in config: config :luagents, :anthropic_api_key, "your-key"
       """
-  end
-
-  defp extract_lua_code(text) do
-    # Extract Lua code from markdown code blocks
-    case Regex.run(~r/```lua\s*(.*?)\s*```/s, text, capture: :all_but_first) do
-      [code] ->
-        {:ok, String.trim(code)}
-
-      _ ->
-        # If no lua block found, check for generic code block
-        case Regex.run(~r/```\s*(.*?)\s*```/s, text, capture: :all_but_first) do
-          [code] -> {:ok, String.trim(code)}
-          _ -> {:error, "No Lua code found in response"}
-        end
-    end
   end
 
   defp format_anthropic_error(error) do

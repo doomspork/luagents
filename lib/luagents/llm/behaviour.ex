@@ -21,7 +21,7 @@ defmodule Luagents.LLM.Behaviour do
   Generate a response from the LLM for the given prompt.
 
   ## Parameters
-  - `llm` - The LLM instance struct
+  - `llm` - The LLM instance
   - `prompt` - The prompt string to send to the LLM
 
   ## Returns

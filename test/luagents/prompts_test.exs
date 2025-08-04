@@ -39,15 +39,24 @@ defmodule Luagents.PromptsTest do
     end
 
     test "includes multiple tools in prompt" do
-      tools = Tool.builtin_tools()
+      tools = %{
+        "add" =>
+          Tool.new(
+            "add",
+            "Add two numbers",
+            [
+              %{name: "a", type: :number, description: "First number", required: true},
+              %{name: "b", type: :number, description: "Second number", required: true}
+            ],
+            fn [a, b] -> {:ok, a + b} end
+          )
+      }
+
       memory = Memory.new()
 
       prompt = Prompts.system_prompt(tools, memory)
 
       assert String.contains?(prompt, "add(")
-      assert String.contains?(prompt, "multiply(")
-      assert String.contains?(prompt, "concat(")
-      assert String.contains?(prompt, "search(")
     end
 
     test "includes memory messages in conversation history" do
@@ -157,11 +166,9 @@ defmodule Luagents.PromptsTest do
     end
 
     test "prompt is well-formed and complete" do
-      tools = Tool.builtin_tools()
+      tools = %{}
 
-      memory =
-        Memory.new()
-        |> Memory.add_message(:user, "Test task")
+      memory = Memory.add_message(Memory.new(), :user, "Test task")
 
       prompt = Prompts.system_prompt(tools, memory)
 

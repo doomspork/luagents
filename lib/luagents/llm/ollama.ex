@@ -34,10 +34,11 @@ defmodule Luagents.LLM.Ollama do
 
     %__MODULE__{
       client: client,
-      model: Keyword.get(opts, :model, @default_model),
       host: Keyword.get(opts, :host, "http://localhost:11434"),
-      temperature: Keyword.get(opts, :temperature, @default_temperature),
-      options: Keyword.get(opts, :options, %{})
+      max_tokens: Keyword.get(opts, :max_tokens, nil),
+      model: Keyword.get(opts, :model, @default_model),
+      options: Keyword.get(opts, :options, %{}),
+      temperature: Keyword.get(opts, :temperature, @default_temperature)
     }
   end
 
@@ -46,9 +47,11 @@ defmodule Luagents.LLM.Ollama do
     request_options = %{temperature: llm.temperature}
 
     request_options =
-      if llm.max_tokens,
-        do: Map.put(request_options, :num_predict, llm.max_tokens),
-        else: request_options
+      if llm.max_tokens do
+        Map.put(request_options, :num_predict, llm.max_tokens)
+      else
+        request_options
+      end
 
     case Ollama.completion(llm.client,
            model: llm.model,
