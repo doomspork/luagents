@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 (2025-08-04)
+
+
+### Features
+
+* Opensource Luagent ([ebf8c4b](https://github.com/doomspork/luagent/commit/ebf8c4b578278706d2c409af3343c1f0cc8d974a))
+
 ## v0.1.0 (2025-07-03)
 
 ### Features
