@@ -1,27 +1,23 @@
-#!/usr/bin/env elixir
-
-Mix.install([{:luagents, path: "."}])
+Mix.install([
+  {:luagents, path: "."},
+  {:ollama, "0.8.0"}
+])
 
 agent = Luagents.create_agent(name: "MinimalBot")
 
-IO.puts("🤖 Luagents Minimal Example\n")
+task = "What is 15 + 27? Then multiply the result by 2."
 
-task = "What is 15 + 27? Then multiply the result by 2. Show your reasoning."
-
-IO.puts("Task: #{task}\n")
+IO.puts("Task: #{task}")
 
 case Luagents.run_with_agent(agent, task) do
   {:ok, result} ->
-    IO.puts("✅ Result: #{result}")
+    IO.puts("Result: #{result}")
 
-  {:error, "Ollama error: " <> _reason} ->
-    IO.puts("""
-    ❌ Ollama is not running. Quick setup:
-
-    1. Install: brew install ollama
-    2. Start: ollama serve
-    3. Get model: ollama pull llama3.2
-    """)
+    if result == 84 do
+      IO.puts("✅ Success")
+    else
+      IO.puts("❌ Expected: 84.0")
+    end
 
   {:error, error} ->
     IO.puts("❌ Error: #{error}")
