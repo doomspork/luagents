@@ -31,7 +31,7 @@ defmodule Luagents.Agent do
       case Keyword.get(opts, :llm) do
         nil ->
           try do
-            LLM.new(provider: :ollama, model: "llama3.1")
+            LLM.new(provider: :ollama, model: "mistral")
           rescue
             _ -> nil
           end

@@ -59,12 +59,12 @@ agent = Luagents.Agent.new(
 ### Ollama
 
 1. Install and run [Ollama](https://ollama.com/)
-2. Pull a model (e.g., `ollama pull llama3.2`)
+2. Pull a model (e.g., `ollama pull mistral`)
 3. Create an agent with Ollama provider:
 
 ```elixir
 agent = Luagents.Agent.new(
-  llm: Luagents.LLM.new(provider: :ollama, model: "llama3.2")
+  llm: Luagents.LLM.new(provider: :ollama, model: "mistral")
 )
 ```
 
@@ -83,7 +83,7 @@ agent = Luagents.Agent.new(
 
 # Use Ollama instead
 agent = Luagents.Agent.new(
-  llm: Luagents.LLM.new(provider: :ollama, model: "llama3.2")
+  llm: Luagents.LLM.new(provider: :ollama, model: "mistral")
 )
 
 # Run a task
@@ -100,7 +100,7 @@ anthropic_agent = Luagents.Agent.new(
 
 ollama_agent = Luagents.Agent.new(
   name: "Ollama Agent", 
-  llm: Luagents.LLM.new(provider: :ollama, model: "llama3.2", host: "http://localhost:11434")
+  llm: Luagents.LLM.new(provider: :ollama, model: "mistral", host: "http://localhost:11434")
 )
 
 agent = Luagents.Agent.new(

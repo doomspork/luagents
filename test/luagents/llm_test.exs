@@ -19,9 +19,9 @@ defmodule Luagents.LLMTest do
     end
 
     test "creates Ollama LLM" do
-      llm = LLM.new(provider: :ollama, model: "llama3.2")
+      llm = LLM.new(provider: :ollama, model: "mistral")
       assert %Ollama{} = llm
-      assert llm.model == "llama3.2"
+      assert llm.model == "mistral"
       assert llm.host == "http://localhost:11434"
     end
 
@@ -36,15 +36,6 @@ defmodule Luagents.LLMTest do
       assert_raise ArgumentError, ~r/Unsupported LLM provider/, fn ->
         LLM.new(provider: :unknown)
       end
-    end
-  end
-
-  describe "providers/0" do
-    test "returns list of supported providers" do
-      providers = LLM.providers()
-      assert :anthropic in providers
-      assert :ollama in providers
-      assert is_list(providers)
     end
   end
 end

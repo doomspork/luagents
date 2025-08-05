@@ -31,7 +31,7 @@ mix run examples/improved_example.exs     # Advanced multi-scenario example
 # For Ollama (local)
 brew install ollama
 ollama serve
-ollama pull llama3.2
+ollama pull mistral
 
 # For Anthropic (cloud)
 export ANTHROPIC_API_KEY="your-key"

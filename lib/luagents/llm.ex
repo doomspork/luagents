@@ -2,7 +2,7 @@ defmodule Luagents.LLM do
   @moduledoc """
   LLM factory and interface for the ReAct agent.
 
-  Supports multiple LLM providers through a behavior pattern:
+  Supports multiple LLM providers:
   - Anthropic Claude (via Anthropix)
   - Ollama (local models)
 
@@ -15,7 +15,7 @@ defmodule Luagents.LLM do
       llm = LLM.new(provider: :anthropic)
 
       # Create an Ollama LLM
-      llm = LLM.new(provider: :ollama, model: "llama3.2")
+      llm = LLM.new(provider: :ollama, model: "mistral")
 
       # Generate a response
       {:ok, response} = LLM.generate(llm, "Your prompt here")
@@ -71,10 +71,4 @@ defmodule Luagents.LLM do
   """
   @spec generate(t(), String.t()) :: {:ok, String.t()} | {:error, String.t()}
   def generate(%module{} = llm, prompt), do: module.generate(llm, prompt)
-
-  @doc """
-  Get the list of supported providers.
-  """
-  @spec providers() :: [provider()]
-  def providers, do: [:anthropic, :ollama]
 end
