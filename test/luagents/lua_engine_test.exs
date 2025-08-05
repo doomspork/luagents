@@ -7,11 +7,8 @@ defmodule Luagents.LuaEngineTest do
     test "creates new Lua state with environment setup" do
       state = LuaEngine.new()
 
-      # Verify state is created
       assert %Lua{} = state
 
-      # Print buffer might be nil initially, gets set on first print
-      # Let's just verify we can execute simple lua
       {:continue, _new_state} = LuaEngine.execute(state, "local x = 1", %{})
     end
   end
@@ -72,7 +69,6 @@ defmodule Luagents.LuaEngineTest do
     end
 
     test "injects tools correctly" do
-      # Use the proper Tool struct format
       add_tool =
         Luagents.Tool.new(
           "add",
@@ -92,7 +88,6 @@ defmodule Luagents.LuaEngineTest do
     end
 
     test "handles tool execution errors gracefully" do
-      # Use proper Tool struct
       failing_tool =
         Luagents.Tool.new(
           "fail",
@@ -107,7 +102,6 @@ defmodule Luagents.LuaEngineTest do
 
       {:continue, new_state} = LuaEngine.execute(state, code, tools)
       buffer = Lua.get!(new_state, ["_print_buffer"])
-      # The tool returns nil on error, Lua prints it as blank
       assert String.contains?(buffer, "result:")
     end
 
@@ -152,7 +146,6 @@ defmodule Luagents.LuaEngineTest do
       code = "final_answer({a = 1, b = 'test'})"
 
       assert {:final_answer, result} = LuaEngine.execute(state, code, %{})
-      # Lua tables come back as lists of tuples
       assert is_list(result)
       assert {"a", 1} in result
       assert {"b", "test"} in result

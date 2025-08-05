@@ -27,7 +27,7 @@ defmodule Luagents.PromptsTest do
               %{name: "a", type: :number, description: "First number", required: true},
               %{name: "b", type: :number, description: "Second number", required: true}
             ],
-            fn [a, b] -> {:ok, a + b} end
+            fn [a, b] -> a + b end
           )
       }
 
@@ -48,7 +48,7 @@ defmodule Luagents.PromptsTest do
               %{name: "a", type: :number, description: "First number", required: true},
               %{name: "b", type: :number, description: "Second number", required: true}
             ],
-            fn [a, b] -> {:ok, a + b} end
+            fn [a, b] -> a + b end
           )
       }
 
@@ -62,10 +62,8 @@ defmodule Luagents.PromptsTest do
     test "includes memory messages in conversation history" do
       tools = %{}
 
-      memory =
-        Memory.new()
-        |> Memory.add_message(:user, "What is 2 + 2?")
-        |> Memory.add_message(:assistant, "I'll calculate that for you.")
+      memory = Memory.add_message(Memory.new(), :user, "What is 2 + 2?")
+      memory = Memory.add_message(memory, :assistant, "I'll calculate that for you.")
 
       prompt = Prompts.system_prompt(tools, memory)
 
@@ -79,7 +77,6 @@ defmodule Luagents.PromptsTest do
 
       prompt = Prompts.system_prompt(tools, memory)
 
-      # Check for key sections
       assert String.contains?(prompt, "You are an expert ReAct agent")
       assert String.contains?(prompt, "special functions:")
       assert String.contains?(prompt, "Here are a few examples")
@@ -94,7 +91,6 @@ defmodule Luagents.PromptsTest do
 
       prompt = Prompts.system_prompt(tools, memory)
 
-      # Check for Lua code blocks in examples
       assert String.contains?(prompt, "```lua")
       assert String.contains?(prompt, "thought(")
       assert String.contains?(prompt, "observation(")
@@ -107,7 +103,6 @@ defmodule Luagents.PromptsTest do
 
       prompt = Prompts.system_prompt(tools, memory)
 
-      # Check for key rules
       assert String.contains?(prompt, "write valid Lua code")
       assert String.contains?(prompt, "Use thought() to explain")
       assert String.contains?(prompt, "Always call final_answer()")
@@ -122,7 +117,7 @@ defmodule Luagents.PromptsTest do
             "test_tool",
             "A test tool",
             [%{name: "param", type: :string, description: "Test param", required: true}],
-            fn _ -> {:ok, "test"} end
+            fn _ -> "test" end
           )
       }
 
@@ -130,7 +125,6 @@ defmodule Luagents.PromptsTest do
 
       prompt = Prompts.system_prompt(tools, memory)
 
-      # Should contain formatted tool
       assert String.contains?(prompt, "- test_tool(param: string): A test tool")
     end
 
@@ -140,9 +134,7 @@ defmodule Luagents.PromptsTest do
 
       prompt = Prompts.system_prompt(tools, memory)
 
-      # Should still contain conversation history section
       assert String.contains?(prompt, "Conversation history:")
-      # But no specific messages
       refute String.contains?(prompt, "USER:")
       refute String.contains?(prompt, "ASSISTANT:")
     end
@@ -150,12 +142,10 @@ defmodule Luagents.PromptsTest do
     test "handles complex memory with system messages" do
       tools = %{}
 
-      memory =
-        Memory.new()
-        |> Memory.add_message(:user, "Calculate 5 + 3")
-        |> Memory.add_message(:assistant, "I'll do that calculation")
-        |> Memory.add_message(:system, "Error: invalid syntax")
-        |> Memory.add_message(:assistant, "Let me fix that and try again")
+      memory = Memory.add_message(Memory.new(), :user, "Calculate 5 + 3")
+      memory = Memory.add_message(memory, :assistant, "I'll do that calculation")
+      memory = Memory.add_message(memory, :system, "Error: invalid syntax")
+      memory = Memory.add_message(memory, :assistant, "Let me fix that and try again")
 
       prompt = Prompts.system_prompt(tools, memory)
 
@@ -172,12 +162,9 @@ defmodule Luagents.PromptsTest do
 
       prompt = Prompts.system_prompt(tools, memory)
 
-      # Basic structure checks
       assert is_binary(prompt)
-      # Should be a substantial prompt
       assert String.length(prompt) > 1000
 
-      # Should start and end appropriately
       assert String.starts_with?(prompt, "You are an expert ReAct agent")
       assert String.ends_with?(String.trim(prompt), "solve the user's task:")
     end
@@ -185,13 +172,12 @@ defmodule Luagents.PromptsTest do
 
   describe "format_tools/1 (private function behavior)" do
     test "formats tools correctly through system_prompt" do
-      # Test the private format_tools function indirectly
       tool1 =
         Tool.new(
           "tool1",
           "First tool",
           [%{name: "x", type: :number, description: "Number", required: true}],
-          fn _ -> {:ok, nil} end
+          fn _ -> nil end
         )
 
       tool2 =
@@ -199,7 +185,7 @@ defmodule Luagents.PromptsTest do
           "tool2",
           "Second tool",
           [],
-          fn _ -> {:ok, nil} end
+          fn _ -> nil end
         )
 
       tools = %{"tool1" => tool1, "tool2" => tool2}
@@ -207,7 +193,6 @@ defmodule Luagents.PromptsTest do
 
       prompt = Prompts.system_prompt(tools, memory)
 
-      # Both tools should be formatted and included
       assert String.contains?(prompt, "- tool1(x: number): First tool")
       assert String.contains?(prompt, "- tool2(): Second tool")
     end
