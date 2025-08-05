@@ -9,7 +9,7 @@ defmodule Luagents.ToolTest do
         %{name: "x", type: :number, description: "Input number", required: true}
       ]
 
-      function = fn [x] -> {:ok, x * 2} end
+      function = fn [x] -> x * 2 end
 
       tool = Tool.new("double", "Double a number", parameters, function)
 
@@ -50,7 +50,7 @@ defmodule Luagents.ToolTest do
         %{name: "b", type: :number, description: "Second number", required: true}
       ]
 
-      tool = Tool.new("add", "Add two numbers", parameters, fn _ -> {:ok, nil} end)
+      tool = Tool.new("add", "Add two numbers", parameters, fn _ -> nil end)
       formatted = Tool.format_for_prompt(tool)
 
       expected = "- add(a: number, b: number): Add two numbers\n"
@@ -63,7 +63,7 @@ defmodule Luagents.ToolTest do
         %{name: "times", type: :number, description: "Repeat count", required: false}
       ]
 
-      tool = Tool.new("repeat", "Repeat text", parameters, fn _ -> {:ok, nil} end)
+      tool = Tool.new("repeat", "Repeat text", parameters, fn _ -> nil end)
       formatted = Tool.format_for_prompt(tool)
 
       expected = "- repeat(text: string, times?: number): Repeat text\n"
@@ -71,7 +71,7 @@ defmodule Luagents.ToolTest do
     end
 
     test "formats tool with no parameters" do
-      tool = Tool.new("current_time", "Get current time", [], fn _ -> {:ok, nil} end)
+      tool = Tool.new("current_time", "Get current time", [], fn _ -> nil end)
       formatted = Tool.format_for_prompt(tool)
 
       expected = "- current_time(): Get current time\n"
@@ -83,7 +83,7 @@ defmodule Luagents.ToolTest do
         %{name: "items", type: :table, description: "List of items", required: true}
       ]
 
-      tool = Tool.new("process_list", "Process items", parameters, fn _ -> {:ok, nil} end)
+      tool = Tool.new("process_list", "Process items", parameters, fn _ -> nil end)
       formatted = Tool.format_for_prompt(tool)
 
       expected = "- process_list(items: table): Process items\n"
@@ -99,7 +99,7 @@ defmodule Luagents.ToolTest do
         %{name: "required2", type: :boolean, description: "Another required", required: true}
       ]
 
-      tool = Tool.new("mixed", "Mixed parameters", parameters, fn _ -> {:ok, nil} end)
+      tool = Tool.new("mixed", "Mixed parameters", parameters, fn _ -> nil end)
       formatted = Tool.format_for_prompt(tool)
 
       assert String.contains?(formatted, "required1: string")
@@ -115,7 +115,7 @@ defmodule Luagents.ToolTest do
         %{name: "tbl", type: :table, description: "Table param", required: true}
       ]
 
-      tool = Tool.new("types", "All types", parameters, fn _ -> {:ok, nil} end)
+      tool = Tool.new("types", "All types", parameters, fn _ -> nil end)
       formatted = Tool.format_for_prompt(tool)
 
       assert String.contains?(formatted, "str: string")

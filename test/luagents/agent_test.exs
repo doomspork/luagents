@@ -14,7 +14,6 @@ defmodule Luagents.AgentTest do
     def new(_opts), do: %__MODULE__{responses: []}
 
     def generate(%MockLLM{responses: [response | _rest]}, _prompt) do
-      # Extract Lua code like real LLM providers do
       extracted_code = Utils.extract_lua_code(response)
       {:ok, extracted_code}
     end
@@ -63,7 +62,6 @@ defmodule Luagents.AgentTest do
 
   describe "run/2" do
     test "returns error when max iterations reached" do
-      # Create a mock that always returns continue (never final_answer)
       mock_llm = MockLLM.new(["print('continue')", "print('still going')"])
       agent = Agent.new(llm: mock_llm, max_iterations: 1)
 
@@ -92,14 +90,14 @@ defmodule Luagents.AgentTest do
           """
           ```lua
           local result = 2 + 3
-          final_answer(tostring(result))
+          final_answer(result)
           ```
           """
         ])
 
       agent = Agent.new(llm: mock_llm, max_iterations: 5)
 
-      assert {:ok, "5"} = Agent.run(agent, "What is 2 + 3?")
+      assert {:ok, 5} = Agent.run(agent, "What is 2 + 3?")
     end
 
     test "uses basic Lua computation" do
@@ -108,13 +106,13 @@ defmodule Luagents.AgentTest do
           """
           local x = 10
           local y = 20
-          final_answer(tostring(x + y))
+          final_answer(x + y)
           """
         ])
 
       agent = Agent.new(llm: mock_llm)
 
-      assert {:ok, "30"} = Agent.run(agent, "Calculate 10 + 20")
+      assert {:ok, 30} = Agent.run(agent, "Calculate 10 + 20")
     end
   end
 end

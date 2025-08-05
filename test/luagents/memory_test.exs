@@ -189,9 +189,7 @@ defmodule Luagents.MemoryTest do
     end
 
     test "converts role atoms to strings" do
-      memory =
-        Memory.new()
-        |> Memory.add_message(:user, "Test")
+      memory = Memory.add_message(Memory.new(), :user, "Test")
 
       [message] = Memory.to_chat_format(memory)
       assert message["role"] == "user"
