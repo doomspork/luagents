@@ -28,7 +28,7 @@ tools = %{
 
 opts = [
   name: "MathBot",
-  llm: Luagents.create_llm(:ollama, model: "llama3.1"),
+  llm: Luagents.create_llm(:ollama, model: "mistral"),
   max_iterations: 15,
   tools: tools
 ]

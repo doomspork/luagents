@@ -14,7 +14,7 @@ defmodule Luagents do
       # Create a custom agent with specific LLM provider
       agent = Luagents.create_agent(
         name: "MathBot",
-        llm: Luagents.create_llm(:ollama, model: "llama3.2"),
+        llm: Luagents.create_llm(:ollama, model: "mistral"),
         max_iterations: 5
       )
 
@@ -139,7 +139,7 @@ defmodule Luagents do
       llm = Luagents.create_llm(:anthropic, model: "claude-3-haiku-20240307")
 
       # Ollama with local model
-      llm = Luagents.create_llm(:ollama, model: "llama3.2")
+      llm = Luagents.create_llm(:ollama, model: "mistral")
 
       # Custom Ollama host
       llm = Luagents.create_llm(:ollama, model: "mistral", host: "http://192.168.1.100:11434")
@@ -149,18 +149,6 @@ defmodule Luagents do
   def create_llm(provider, opts \\ []) do
     LLM.new([provider: provider] ++ opts)
   end
-
-  @doc """
-  Get available LLM providers.
-
-  ## Examples
-
-      iex> Luagents.llm_providers()
-      [:anthropic, :ollama]
-
-  """
-  @spec llm_providers() :: [LLM.provider()]
-  def llm_providers, do: LLM.providers()
 
   @doc """
   Create a custom tool for use with agents.

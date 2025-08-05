@@ -25,7 +25,7 @@ defmodule Luagents.LLM.Ollama do
           temperature: float()
         }
 
-  @default_model "llama3.2"
+  @default_model "mistral"
   @default_temperature 0.7
 
   @impl true
