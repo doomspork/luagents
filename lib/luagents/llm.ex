@@ -6,6 +6,9 @@ defmodule Luagents.LLM do
   - Anthropic Claude (via Anthropix)
   - Ollama (local models)
 
+  The effectiveness of this ReAct agent heavily depends on the underlying model's reasoning capabilities and code generation quality.
+  For best results, use a high-quality model with strong logical reasoning and programming skills.
+
   ## Usage
 
       # Create an Anthropic LLM (default)

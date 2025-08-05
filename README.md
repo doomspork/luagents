@@ -24,6 +24,8 @@ Luagents supports multiple LLM providers through a pluggable architecture:
 - **Anthropic Claude** (via Anthropix) - Cloud-based, high-quality responses
 - **Ollama** - Local models, privacy-focused, customizable
 
+**Important Note**: This agent's performance is directly tied to the quality of the underlying language model. Using a model with strong reasoning and coding capabilities is essential for reliable results.
+
 ## Installation
 
 Add `luagents` to your dependencies in `mix.exs`:
