@@ -26,7 +26,7 @@ defmodule Luagents.MixProject do
     [
       {:anthropix, "~> 0.6"},
       {:lua, "~> 0.3.0"},
-      {:ollama, "0.8.0"},
+      {:ollama, "0.9.0"},
 
       # Dev & Test dependencies
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
