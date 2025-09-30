@@ -43,7 +43,7 @@ tools = %{
 
 agent =
   Luagents.create_agent(
-    llm: Luagents.LLM.new(provider: :ollama, model: "mistral"),
+    llm: Luagents.LLM.new(),
     max_iterations: 10,
     name: "ReActDemo",
     tools: tools
