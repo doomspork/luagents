@@ -73,7 +73,7 @@ defmodule Luagents.LLM.Anthropic do
 
     case Anthropix.chat(llm.client, final_options) do
       {:ok, %{"content" => [%{"text" => response} | _]}} ->
-        Utils.extract_lua_code(response)
+        {:ok, Utils.extract_lua_code(response)}
 
       {:ok, %{"content" => content}} when is_list(content) ->
         text =
@@ -82,7 +82,7 @@ defmodule Luagents.LLM.Anthropic do
             _ -> ""
           end)
 
-        Utils.extract_lua_code(text)
+        {:ok, Utils.extract_lua_code(text)}
 
       {:error, error} ->
         {:error, format_anthropic_error(error)}
@@ -90,14 +90,12 @@ defmodule Luagents.LLM.Anthropic do
   end
 
   defp get_api_key(opts) do
-    # Priority: 1. Passed option, 2. Environment variable
     Keyword.get(opts, :api_key) ||
       System.get_env("ANTHROPIC_API_KEY") ||
       raise ArgumentError, """
       Anthropic API key not found. Please provide it via one of:
       1. Pass as option: Luagents.create_llm(:anthropic, api_key: "your-key")
       2. Set environment variable: export ANTHROPIC_API_KEY="your-key"
-      3. Configure in config: config :luagents, :anthropic_api_key, "your-key"
       """
   end
 
