@@ -73,46 +73,54 @@ agent = Luagents.Agent.new(
 ### Basic Usage
 
 ```elixir
-# Create an agent with Anthropic Claude (default)
-agent = Luagents.Agent.new()
-
-# Or specify the provider explicitly  
-agent = Luagents.Agent.new(
-  llm: Luagents.LLM.new(provider: :anthropic)
-)
-
-# Use Ollama instead
-agent = Luagents.Agent.new(
-  llm: Luagents.LLM.new(provider: :ollama, model: "mistral")
-)
+# Create an agent (uses Anthropic Claude by default)
+agent = Luagents.create_agent(name: "MyBot")
 
 # Run a task
-{:ok, result} = Luagents.Agent.run(agent, "What is 2 + 2?")
+{:ok, result} = Luagents.run_with_agent(agent, "What is 2 + 2?")
 ```
 
-### Advanced Usage
+### Using Different LLM Providers
 
 ```elixir
-anthropic_agent = Luagents.Agent.new(
-  name: "Claude Agent",
-  llm: Luagents.LLM.new(provider: :anthropic, model: "claude-3-sonnet-20240229")
+# Use Ollama with a specific model
+agent = Luagents.create_agent(
+  name: "OllamaBot",
+  llm: Luagents.create_llm(:ollama, model: "mistral")
 )
 
-ollama_agent = Luagents.Agent.new(
-  name: "Ollama Agent", 
-  llm: Luagents.LLM.new(provider: :ollama, model: "mistral", host: "http://localhost:11434")
+# Use Anthropic Claude with a specific model
+agent = Luagents.create_agent(
+  name: "ClaudeBot",
+  llm: Luagents.create_llm(:anthropic, model: "claude-3-opus-20240229")
 )
+```
 
-agent = Luagents.Agent.new(
-  name: "MyAgent",
-  max_iterations: 10,
-  llm: Luagents.LLM.new(
-    model: "claude-3-opus-20240229",
-    temperature: 0.5
+### Adding Custom Tools
+
+```elixir
+# Define custom tools using deflua or anonymous functions
+tools = %{
+  power: Luagents.Tool.new(
+    "power",
+    "Calculate power (base^exponent)",
+    [
+      %{name: "base", type: :number, description: "Base number", required: true},
+      %{name: "exp", type: :number, description: "Exponent", required: true}
+    ],
+    fn [base, exp] -> :math.pow(base, exp) end
   )
+}
+
+# Create agent with custom tools and configuration
+agent = Luagents.create_agent(
+  name: "MathBot",
+  llm: Luagents.create_llm(:ollama, model: "mistral"),
+  max_iterations: 15,
+  tools: tools
 )
 
-{:ok, result} = Luagents.run_with_agent(agent, "Hello!")
+{:ok, result} = Luagents.Agent.run(agent, "What is 10 to the power of 2?")
 ```
 
 ## Example Lua Thinking
