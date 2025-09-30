@@ -24,6 +24,14 @@ defmodule Luagents.AgentTest do
   end
 
   describe "new/1" do
+    setup do
+      System.put_env("ANTHROPIC_API_KEY", "test-key")
+
+      on_exit(fn ->
+        System.delete_env("ANTHROPIC_API_KEY")
+      end)
+    end
+
     test "creates agent with default values" do
       agent = Agent.new()
 
