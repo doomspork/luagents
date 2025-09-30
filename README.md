@@ -123,6 +123,34 @@ agent = Luagents.create_agent(
 {:ok, result} = Luagents.Agent.run(agent, "What is 10 to the power of 2?")
 ```
 
+### Built-in Tools
+
+Luagents provides several ready-to-use tools that can be easily added to your agents:
+
+#### JSON Tools (`Luagents.Tools.Json`)
+Parse, encode, and format JSON data within your Lua agent code. Enables seamless conversion between JSON strings and Lua tables for working with APIs and structured data.
+
+- `parse(json_string)` - Parse JSON strings into Lua tables
+- `encode(data)` - Encode Lua tables/values into JSON strings
+- `pretty(data)` - Pretty-print JSON with formatting
+
+#### HTTP Client (`Luagents.Tools.Http`)
+Make HTTP requests to external APIs and services directly from your agent's Lua code. Supports all common HTTP methods with customizable headers and request bodies.
+
+- `get(url, headers?)` - Make HTTP GET requests
+- `post(url, body, headers?)` - Make HTTP POST requests
+- `put(url, body, headers?)` - Make HTTP PUT requests
+- `delete(url, headers?)` - Make HTTP DELETE requests
+
+#### Logger (`Luagents.Tools.Logger`)
+Log messages from your agent's reasoning process to Elixir's Logger at various levels. Useful for debugging, monitoring agent behavior, and capturing important events during task execution.
+
+- `debug(message, metadata?)` - Log debug-level messages
+- `info(message, metadata?)` - Log informational messages
+- `warning(message, metadata?)` - Log warnings
+- `error(message, metadata?)` - Log errors
+- `log(level, message, metadata?)` - Log at a specific level with optional metadata
+
 ## Example Lua Thinking
 
 The agent thinks in Lua code like this:
