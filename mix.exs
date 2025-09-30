@@ -10,6 +10,7 @@ defmodule Luagents.MixProject do
       version: @version,
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
       docs: docs(),
       package: package()
@@ -22,13 +23,19 @@ defmodule Luagents.MixProject do
     ]
   end
 
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
+
   defp deps do
     [
       {:anthropix, "~> 0.6"},
       {:lua, "~> 0.3.0"},
       {:ollama, "0.8.0"},
+      {:req, "~> 0.5", optional: true},
+      {:jason, "~> 1.4", optional: true},
 
       # Dev & Test dependencies
+      {:bypass, "~> 2.1", only: :test},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},

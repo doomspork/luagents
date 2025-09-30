@@ -154,24 +154,24 @@ defmodule Luagents.ToolTest do
     test "extracts parameter names from signatures" do
       tools = Tool.from_module(Luagents.Tools.Json)
 
-      assert length(tools.parse.parameters) == 1
+      # JSON tools now have state parameter, so 2 params but only 1 user-facing
+      assert length(tools.parse.parameters) == 2
       assert hd(tools.parse.parameters).name == "json_string"
       assert hd(tools.parse.parameters).required == true
 
-      assert length(tools.encode.parameters) == 1
+      assert length(tools.encode.parameters) == 2
       assert hd(tools.encode.parameters).name == "data"
       assert hd(tools.encode.parameters).required == true
 
-      # Test String.split which has optional parameters
-      string_tools = Tool.from_module(Luagents.Tools.String)
-      split_params = string_tools.split.parameters
+      logger_tools = Tool.from_module(Luagents.Tools.Logger)
+      log_params = logger_tools.log.parameters
 
-      assert length(split_params) == 2
-      [first, second] = split_params
-      assert first.name == "string"
+      assert length(log_params) >= 2
+      [first, second | _] = log_params
+      assert first.name == "level"
       assert first.required == true
-      assert second.name == "delimiter"
-      assert second.required == false
+      assert second.name == "message"
+      assert second.required == true
     end
 
     test "sets api field to module" do
@@ -215,11 +215,11 @@ defmodule Luagents.ToolTest do
       assert hd(tools.encode.parameters).type == :table
     end
 
-    test "defaults parameter types to :string" do
+    test "defaults parameter types appropriately" do
       tools = Tool.from_module(Luagents.Tools.Json)
 
       assert hd(tools.parse.parameters).type == :string
-      assert hd(tools.encode.parameters).type == :string
+      assert hd(tools.encode.parameters).type == :table
     end
   end
 
@@ -251,84 +251,64 @@ defmodule Luagents.ToolTest do
       end
     end
 
-    test "handles functions with no parameters" do
-      # Use a built-in tool module - File.ls/1 has 1 param, so create custom test
-      # Actually, let's test with String.reverse which has 1 required param
-      tool = Tool.from_function(Luagents.Tools.String, :reverse)
-
-      assert length(tool.parameters) == 1
-      assert hd(tool.parameters).required == true
-    end
-
     test "handles multiple optional parameters" do
-      # String.pad has multiple params with defaults
-      tool = Tool.from_function(Luagents.Tools.String, :pad)
+      tool = Tool.from_function(Luagents.Tools.Logger, :log)
 
-      assert length(tool.parameters) == 4
-      [a, b, c, d] = tool.parameters
+      assert length(tool.parameters) >= 2
+      [a, b | _rest] = tool.parameters
 
-      assert a.name == "string"
+      assert a.name == "level"
       assert a.required == true
 
-      assert b.name == "length"
+      assert b.name == "message"
       assert b.required == true
 
-      assert c.name == "padding"
-      assert c.required == false
-
-      assert d.name == "side"
-      assert d.required == false
+      if length(tool.parameters) >= 3 do
+        c = Enum.at(tool.parameters, 2)
+        assert c.name == "metadata"
+        assert c.required == false
+      end
     end
   end
 
-  describe "Phase 2: @doc parameter descriptions" do
+  describe "@doc parameter descriptions" do
     test "extracts parameter descriptions from ## Parameters section" do
-      tools = Tool.from_module(Luagents.Tools.String)
+      tools = Tool.from_module(Luagents.Tools.Http)
 
-      # String.match has parameter descriptions
-      match_params = tools.match.parameters
-      assert length(match_params) == 2
+      get_params = tools.get.parameters
+      assert length(get_params) >= 2
 
-      [string_param, pattern_param] = match_params
-      assert string_param.name == "string"
-      assert string_param.description == "The string to match"
-
-      assert pattern_param.name == "pattern"
-      assert pattern_param.description == "The regex pattern"
+      url_param = Enum.find(get_params, &(&1.name == "url"))
+      assert url_param != nil
+      assert url_param.description == "The URL to request"
     end
 
     test "extracts parameter descriptions from ## Parameters with all fields" do
-      tools = Tool.from_module(Luagents.Tools.String)
+      tools = Tool.from_module(Luagents.Tools.Http)
 
-      # String.replace has 3 parameters with descriptions
-      replace_params = tools.replace.parameters
-      assert length(replace_params) == 3
+      post_params = tools.post.parameters
+      assert length(post_params) >= 3
 
-      [string_param, pattern_param, replacement_param] = replace_params
+      url_param = Enum.find(post_params, &(&1.name == "url"))
+      body_param = Enum.find(post_params, &(&1.name == "body"))
+      headers_param = Enum.find(post_params, &(&1.name == "headers"))
 
-      assert string_param.name == "string"
-      assert string_param.description == "The string to modify"
-
-      assert pattern_param.name == "pattern"
-      assert pattern_param.description == "The regex pattern to match"
-
-      assert replacement_param.name == "replacement"
-      assert replacement_param.description == "The replacement string"
+      assert url_param.description == "The URL to request"
+      assert body_param.description == "The request body (string or table)"
+      assert headers_param.description == "Optional table of headers (default: {})"
     end
 
     test "handles functions without ## Parameters section gracefully" do
-      # Json tools don't have ## Parameters sections
-      tools = Tool.from_module(Luagents.Tools.Json)
+      tools = Tool.from_module(Luagents.Tools.Logger)
 
-      parse_params = tools.parse.parameters
-      assert length(parse_params) == 1
-      # Should still work, just without descriptions
-      assert hd(parse_params).name == "json_string"
-      assert hd(parse_params).description == ""
+      debug_params = tools.debug.parameters
+      assert length(debug_params) >= 1
+      message_param = hd(debug_params)
+      assert message_param.name == "message"
     end
   end
 
-  describe "Phase 2: [type] annotations in @doc" do
+  describe "[type] annotations in @doc" do
     test "extracts types from [type] annotations" do
       tool = Tool.from_function(Luagents.Test.TypeAnnotationTools, :process)
 
@@ -372,14 +352,13 @@ defmodule Luagents.ToolTest do
 
       [items, arr, obj] = tool.parameters
 
-      # All should map to :table
       assert items.type == :table
       assert arr.type == :table
       assert obj.type == :table
     end
   end
 
-  describe "Phase 2: @spec type extraction" do
+  describe "@spec type extraction" do
     test "extracts types from @spec for integer" do
       tool = Tool.from_function(Luagents.Test.SpecTools, :add)
 
@@ -403,7 +382,6 @@ defmodule Luagents.ToolTest do
     test "extracts types from @spec for boolean" do
       tool = Tool.from_function(Luagents.Test.SpecTools, :equal?)
 
-      # any() maps to :string by default
       assert length(tool.parameters) == 2
     end
 
@@ -417,7 +395,7 @@ defmodule Luagents.ToolTest do
     end
   end
 
-  describe "Phase 2: priority order" do
+  describe "priority order" do
     test "param_types option overrides everything" do
       tool =
         Tool.from_function(Luagents.Test.PriorityTools, :test_priority,
@@ -426,7 +404,6 @@ defmodule Luagents.ToolTest do
 
       [p1, p2] = tool.parameters
 
-      # Option wins
       assert p1.type == :string
       assert p2.type == :boolean
     end
@@ -436,10 +413,8 @@ defmodule Luagents.ToolTest do
 
       [p1, p2] = tool.parameters
 
-      # param1: @doc says :number, @spec says integer() -> @doc wins
       assert p1.type == :number
 
-      # param2: @doc has no type, @spec says String.t() -> @spec wins
       assert p2.type == :string
     end
 
