@@ -8,23 +8,16 @@ alias Luagents.Agent
 defmodule PowerTool do
   use Lua.API
 
+  @doc """
+  Calculate power of a number.
+  Raises base to the power of exponent.
+  """
   deflua power(base, exp) do
     :math.pow(base, exp)
   end
 end
 
-tools = %{
-  power:
-    Luagents.Tool.new(
-      "power",
-      "Calculate power",
-      [
-        %{name: "base", type: :number, description: "Base", required: true},
-        %{name: "exp", type: :number, description: "Exponent", required: true}
-      ],
-      PowerTool
-    )
-}
+tools = Luagents.Tool.from_module(PowerTool, param_types: %{base: :number, exp: :number})
 
 opts = [
   name: "MathBot",
