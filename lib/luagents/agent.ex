@@ -27,21 +27,10 @@ defmodule Luagents.Agent do
 
   @spec new(Keyword.t()) :: t()
   def new(opts \\ []) do
-    default_llm =
-      case Keyword.get(opts, :llm) do
-        nil ->
-          try do
-            LLM.new(provider: :ollama, model: "mistral")
-          rescue
-            _ -> nil
-          end
-
-        llm ->
-          llm
-      end
+    llm = Keyword.get_lazy(opts, :llm, fn -> LLM.new() end)
 
     %__MODULE__{
-      llm: default_llm,
+      llm: llm,
       lua_state: LuaEngine.new(),
       max_iterations: Keyword.get(opts, :max_iterations, @default_max_iterations),
       memory: Keyword.get(opts, :memory, %Memory{}),
@@ -64,47 +53,50 @@ defmodule Luagents.Agent do
   defp run_loop(agent, iteration) do
     prompt = build_prompt(agent)
 
-    case LLM.generate(agent.llm, prompt) do
-      {:ok, lua_code} ->
-        agent = put_in(agent.memory, Memory.add_message(agent.memory, :assistant, lua_code))
-
-        case LuaEngine.execute(agent.lua_state, lua_code, agent.tools) do
-          {:final_answer, answer} ->
-            {:ok, answer}
-
-          {:continue, new_lua_state} ->
-            print_output = Lua.get!(new_lua_state, ["_print_buffer"]) || ""
-
-            agent = %{agent | lua_state: new_lua_state}
-            agent = maybe_add_print_output(agent, print_output)
-
-            run_loop(agent, iteration + 1)
-
-          {:error, error} ->
-            agent =
-              put_in(
-                agent.memory,
-                Memory.add_message(agent.memory, :system, "Error: #{inspect(error)}")
-              )
-
-            run_loop(agent, iteration + 1)
-        end
-
-      {:error, llm_error} ->
-        {:error, llm_error}
+    with {:ok, lua_code} <- LLM.generate(agent.llm, prompt) do
+      agent
+      |> add_message(:assistant, lua_code)
+      |> execute_lua_code(lua_code)
+      |> handle_execution_result(iteration)
     end
+  end
+
+  defp execute_lua_code(agent, lua_code) do
+    {agent, LuaEngine.execute(agent.lua_state, lua_code, agent.tools)}
+  end
+
+  defp handle_execution_result({_agent, {:final_answer, answer}}, _iteration) do
+    {:ok, answer}
+  end
+
+  defp handle_execution_result({agent, {:continue, new_lua_state}}, iteration) do
+    print_output = Lua.get!(new_lua_state, ["_print_buffer"]) || ""
+
+    agent
+    |> Map.put(:lua_state, new_lua_state)
+    |> add_print_output(print_output)
+    |> run_loop(iteration + 1)
+  end
+
+  defp handle_execution_result({agent, {:error, error}}, iteration) do
+    agent
+    |> add_message(:system, "Error: #{inspect(error)}")
+    |> run_loop(iteration + 1)
+  end
+
+  defp add_message(agent, role, content) do
+    put_in(agent.memory, Memory.add_message(agent.memory, role, content))
+  end
+
+  defp add_print_output(agent, "") do
+    agent
+  end
+
+  defp add_print_output(agent, print_output) do
+    add_message(agent, :system, print_output)
   end
 
   defp build_prompt(agent) do
     Luagents.Prompts.system_prompt(agent.tools, agent.memory)
   end
-
-  defp maybe_add_print_output(agent, print_output) when print_output != "" do
-    put_in(
-      agent.memory,
-      Memory.add_message(agent.memory, :system, print_output)
-    )
-  end
-
-  defp maybe_add_print_output(agent, _print_output), do: agent
 end
