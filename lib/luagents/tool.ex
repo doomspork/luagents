@@ -156,6 +156,7 @@ defmodule Luagents.Tool do
     |> Enum.filter(fn
       {{:function, name, _arity}, _, _, _, _} ->
         name_str = Atom.to_string(name)
+
         not String.starts_with?(name_str, "_") and
           name not in lua_api_functions and
           (is_nil(only) or name in only) and
