@@ -6,18 +6,18 @@ defmodule Luagents.Tools.Logger do
 
   ## Usage
 
-      tools = Tool.from_module(Luagents.Tools.Logger, prefix: "log_")
+      tools = Tool.from_module(Luagents.Tools.Logger)
 
   ## Lua Usage
 
-      log_debug("Debug information")
-      log_info("Information message")
-      log_warning("Warning message")
-      log_error("Error message")
-      log_log("info", "User action", {user_id = 123})
+      log.debug("Debug information")
+      log.info("Information message")
+      log.warning("Warning message")
+      log.error("Error message")
+      log.log("info", "User action", {user_id = 123})
   """
 
-  use Lua.API
+  use Lua.API, scope: "log"
 
   require Logger
 

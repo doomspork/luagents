@@ -8,7 +8,7 @@ defmodule Luagents.Tools.LoggerTest do
   alias Luagents.Tools.Logger, as: LoggerTool
 
   setup do
-    tools = Tool.from_module(LoggerTool, prefix: "log_")
+    tools = Tool.from_module(LoggerTool)
     lua = setup_lua_with_tools(tools)
     {:ok, lua: lua}
   end
@@ -16,7 +16,7 @@ defmodule Luagents.Tools.LoggerTest do
   test "logs debug message from Lua", %{lua: lua} do
     log =
       capture_log([level: :debug], fn ->
-        assert_lua_ok(lua, ~s[log_debug("Debug from Lua")])
+        assert_lua_ok(lua, ~s[log.debug("Debug from Lua")])
       end)
 
     assert log =~ "Debug from Lua"
@@ -25,7 +25,7 @@ defmodule Luagents.Tools.LoggerTest do
   test "logs info message from Lua", %{lua: lua} do
     log =
       capture_log(fn ->
-        assert_lua_ok(lua, ~s[log_info("Info from Lua")])
+        assert_lua_ok(lua, ~s[log.info("Info from Lua")])
       end)
 
     assert log =~ "Info from Lua"
@@ -34,7 +34,7 @@ defmodule Luagents.Tools.LoggerTest do
   test "logs warning message from Lua", %{lua: lua} do
     log =
       capture_log(fn ->
-        assert_lua_ok(lua, ~s[log_warning("Warning from Lua")])
+        assert_lua_ok(lua, ~s[log.warning("Warning from Lua")])
       end)
 
     assert log =~ "Warning from Lua"
@@ -43,7 +43,7 @@ defmodule Luagents.Tools.LoggerTest do
   test "logs error message from Lua", %{lua: lua} do
     log =
       capture_log(fn ->
-        assert_lua_ok(lua, ~s[log_error("Error from Lua")])
+        assert_lua_ok(lua, ~s[log.error("Error from Lua")])
       end)
 
     assert log =~ "Error from Lua"
@@ -52,7 +52,7 @@ defmodule Luagents.Tools.LoggerTest do
   test "logs with metadata from Lua", %{lua: lua} do
     log =
       capture_log(fn ->
-        code = ~s[log_info("info", "Action from Lua", {user_id = 456, action = "test"})]
+        code = ~s[log.log("info", "Action from Lua", {user_id = 456, action = "test"})]
         assert_lua_ok(lua, code)
       end)
 
@@ -63,9 +63,9 @@ defmodule Luagents.Tools.LoggerTest do
     log =
       capture_log([level: :debug], fn ->
         code = """
-        log_debug("First message")
-        log_info("Second message")
-        log_warning("Third message")
+        log.debug("First message")
+        log.info("Second message")
+        log.warning("Third message")
         """
 
         assert_lua_ok(lua, code)
@@ -81,7 +81,7 @@ defmodule Luagents.Tools.LoggerTest do
       capture_log(fn ->
         code = """
         for i = 1, 3 do
-          log_info("Iteration " .. i)
+          log.info("Iteration " .. i)
         end
         """
 
@@ -99,7 +99,7 @@ defmodule Luagents.Tools.LoggerTest do
         code = """
         local name = "Alice"
         local age = 30
-        log_info("User: " .. name .. ", Age: " .. age)
+        log.info("User: " .. name .. ", Age: " .. age)
         """
 
         assert_lua_ok(lua, code)
@@ -109,7 +109,7 @@ defmodule Luagents.Tools.LoggerTest do
   end
 
   test "returns ok atom directly from Lua", %{lua: lua} do
-    result = eval_lua(lua, ~s[return log_info("Test return value")])
+    result = eval_lua(lua, ~s[return log.info("Test return value")])
     assert result == nil
   end
 end

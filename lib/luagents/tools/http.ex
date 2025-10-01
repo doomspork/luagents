@@ -5,7 +5,7 @@ defmodule Luagents.Tools.Http do
   Provides functions to make HTTP requests (GET, POST, PUT, DELETE) using Req.
   """
 
-  use Lua.API
+  use Lua.API, scope: "http"
 
   @doc """
   Make a GET request to the specified URL.

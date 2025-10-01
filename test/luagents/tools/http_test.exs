@@ -8,19 +8,19 @@ defmodule Luagents.Tools.HttpTest do
 
   setup do
     bypass = Bypass.open()
-    tools = Tool.from_module(Http, prefix: "http_")
+    tools = Tool.from_module(Http)
     lua = setup_lua_with_tools(tools)
     {:ok, bypass: bypass, lua: lua}
   end
 
-  describe "http_get/2" do
+  describe "http.get/2" do
     test "makes successful GET request from Lua", %{bypass: bypass, lua: lua} do
       Bypass.expect_once(bypass, "GET", "/posts/1", fn conn ->
         Plug.Conn.resp(conn, 200, ~s({"userId": 1, "id": 1, "title": "Test Post"}))
       end)
 
       code = """
-      local status, headers, body = table.unpack(http_get("http://localhost:#{bypass.port}/posts/1"))
+      local status, headers, body = table.unpack(http.get("http://localhost:#{bypass.port}/posts/1"))
       if status == 200 and body then
         local found = string.find(body, "userId")
         if found then
@@ -39,7 +39,7 @@ defmodule Luagents.Tools.HttpTest do
       end)
 
       code = """
-      local status, headers, body = table.unpack(http_get("http://localhost:#{bypass.port}/users/1"))
+      local status, headers, body = table.unpack(http.get("http://localhost:#{bypass.port}/users/1"))
       if status == 200 then
         local found = string.find(body, "Leanne Graham")
         if found then
@@ -60,7 +60,7 @@ defmodule Luagents.Tools.HttpTest do
 
       code = """
       local headers = {["User-Agent"] = "Luagents/Test"}
-      local status, resp_headers, body = table.unpack(http_get("http://localhost:#{bypass.port}/posts/1", headers))
+      local status, resp_headers, body = table.unpack(http.get("http://localhost:#{bypass.port}/posts/1", headers))
       return status
       """
 
@@ -74,7 +74,7 @@ defmodule Luagents.Tools.HttpTest do
       end)
 
       code = """
-      local status, headers, body = table.unpack(http_get("http://localhost:#{bypass.port}/posts/999999"))
+      local status, headers, body = table.unpack(http.get("http://localhost:#{bypass.port}/posts/999999"))
       return status
       """
 
@@ -84,7 +84,7 @@ defmodule Luagents.Tools.HttpTest do
 
     test "handles GET request errors from Lua", %{lua: lua} do
       code = """
-      local result = http_get("not-a-valid-url")
+      local result = http.get("not-a-valid-url")
       if type(result) == "string" then
         local found = string.find(result, "HTTP request failed")
         if found then
@@ -98,7 +98,7 @@ defmodule Luagents.Tools.HttpTest do
     end
   end
 
-  describe "http_post/3" do
+  describe "http.post/3" do
     test "makes successful POST request with JSON body from Lua", %{bypass: bypass, lua: lua} do
       Bypass.expect_once(bypass, "POST", "/posts", fn conn ->
         {:ok, body, conn} = Plug.Conn.read_body(conn)
@@ -109,7 +109,7 @@ defmodule Luagents.Tools.HttpTest do
       code = """
       local body = {title = "Test Post", body = "Test content", userId = 1}
       local headers = {["Content-Type"] = "application/json"}
-      local status, resp_headers, resp_body = table.unpack(http_post("http://localhost:#{bypass.port}/posts", body, headers))
+      local status, resp_headers, resp_body = table.unpack(http.post("http://localhost:#{bypass.port}/posts", body, headers))
       if status == 201 and resp_body then
         local found = string.find(resp_body, "Test Post")
         if found then
@@ -129,7 +129,7 @@ defmodule Luagents.Tools.HttpTest do
 
       code = """
       local body = {name = "Alice", email = "alice@example.com"}
-      local status, headers, resp = table.unpack(http_post("http://localhost:#{bypass.port}/posts", body, {}))
+      local status, headers, resp = table.unpack(http.post("http://localhost:#{bypass.port}/posts", body, {}))
       return status
       """
 
@@ -146,7 +146,7 @@ defmodule Luagents.Tools.HttpTest do
 
       code = """
       local body = "plain text data"
-      local status, headers, resp = table.unpack(http_post("http://localhost:#{bypass.port}/posts", body, {}))
+      local status, headers, resp = table.unpack(http.post("http://localhost:#{bypass.port}/posts", body, {}))
       if status == 201 then
         return "ok"
       end
@@ -157,7 +157,7 @@ defmodule Luagents.Tools.HttpTest do
     end
   end
 
-  describe "http_put/3" do
+  describe "http.put/3" do
     test "makes successful PUT request from Lua", %{bypass: bypass, lua: lua} do
       Bypass.expect_once(bypass, "PUT", "/posts/1", fn conn ->
         {:ok, body, conn} = Plug.Conn.read_body(conn)
@@ -168,7 +168,7 @@ defmodule Luagents.Tools.HttpTest do
       code = """
       local body = {id = 1, title = "Updated", body = "Updated content", userId = 1}
       local headers = {["Content-Type"] = "application/json"}
-      local status, resp_headers, resp_body = table.unpack(http_put("http://localhost:#{bypass.port}/posts/1", body, headers))
+      local status, resp_headers, resp_body = table.unpack(http.put("http://localhost:#{bypass.port}/posts/1", body, headers))
       if status == 200 and resp_body then
         local found = string.find(resp_body, "Updated")
         if found then
@@ -188,7 +188,7 @@ defmodule Luagents.Tools.HttpTest do
 
       code = """
       local body = {name = "Bob Updated"}
-      local status = table.unpack(http_put("http://localhost:#{bypass.port}/users/1", body, {}))
+      local status = table.unpack(http.put("http://localhost:#{bypass.port}/users/1", body, {}))
       return status
       """
 
@@ -197,14 +197,14 @@ defmodule Luagents.Tools.HttpTest do
     end
   end
 
-  describe "http_delete/2" do
+  describe "http.delete/2" do
     test "makes successful DELETE request from Lua", %{bypass: bypass, lua: lua} do
       Bypass.expect_once(bypass, "DELETE", "/posts/1", fn conn ->
         Plug.Conn.resp(conn, 200, ~s({}))
       end)
 
       code = """
-      local status, headers, body = table.unpack(http_delete("http://localhost:#{bypass.port}/posts/1"))
+      local status, headers, body = table.unpack(http.delete("http://localhost:#{bypass.port}/posts/1"))
       return status
       """
 
@@ -220,7 +220,7 @@ defmodule Luagents.Tools.HttpTest do
 
       code = """
       local headers = {["Authorization"] = "Bearer token123"}
-      local status = table.unpack(http_delete("http://localhost:#{bypass.port}/posts/1", headers))
+      local status = table.unpack(http.delete("http://localhost:#{bypass.port}/posts/1", headers))
       return status
       """
 
@@ -234,7 +234,7 @@ defmodule Luagents.Tools.HttpTest do
       end)
 
       code = """
-      local status, headers, body = table.unpack(http_delete("http://localhost:#{bypass.port}/users/1"))
+      local status, headers, body = table.unpack(http.delete("http://localhost:#{bypass.port}/users/1"))
       if status == 200 then
         return "deleted"
       end
@@ -248,7 +248,7 @@ defmodule Luagents.Tools.HttpTest do
   describe "error handling" do
     test "returns error for invalid URL from Lua", %{lua: lua} do
       code = """
-      local result = http_get("not-a-valid-url")
+      local result = http.get("not-a-valid-url")
       if type(result) == "string" then
         local found = string.find(result, "HTTP request failed")
         if found then
@@ -263,7 +263,7 @@ defmodule Luagents.Tools.HttpTest do
 
     test "handles network errors gracefully from Lua", %{lua: lua} do
       code = """
-      local result = http_get("http://localhost:99999")
+      local result = http.get("http://localhost:99999")
       if type(result) == "string" then
         return "error"
       end
@@ -275,7 +275,7 @@ defmodule Luagents.Tools.HttpTest do
 
     test "handles connection refused errors from Lua", %{lua: lua} do
       code = """
-      local result = http_get("http://localhost:1")
+      local result = http.get("http://localhost:1")
       if type(result) == "string" then
         local found = string.find(result, "HTTP request failed")
         if found then
@@ -296,7 +296,7 @@ defmodule Luagents.Tools.HttpTest do
       end)
 
       code = """
-      local status, headers, body = table.unpack(http_get("http://localhost:#{bypass.port}/posts/1"))
+      local status, headers, body = table.unpack(http.get("http://localhost:#{bypass.port}/posts/1"))
       if status == 200 then
         -- Simulate parsing - in real usage would use json_parse
         local found_user = string.find(body, '"userId"')
@@ -327,7 +327,7 @@ defmodule Luagents.Tools.HttpTest do
       code = """
       local count = 0
       for i = 1, 3 do
-        local status = table.unpack(http_get("http://localhost:#{bypass.port}/posts/" .. i))
+        local status = table.unpack(http.get("http://localhost:#{bypass.port}/posts/" .. i))
         if status == 200 then
           count = count + 1
         end
@@ -349,10 +349,10 @@ defmodule Luagents.Tools.HttpTest do
       end)
 
       code = """
-      local status, headers, body = table.unpack(http_get("http://localhost:#{bypass.port}/posts/1"))
+      local status, headers, body = table.unpack(http.get("http://localhost:#{bypass.port}/posts/1"))
       if status == 200 then
         -- Make another request based on first response
-        local status2 = table.unpack(http_get("http://localhost:#{bypass.port}/users/1"))
+        local status2 = table.unpack(http.get("http://localhost:#{bypass.port}/users/1"))
         if status2 == 200 then
           return "success"
         end

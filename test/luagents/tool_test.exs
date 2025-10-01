@@ -135,12 +135,12 @@ defmodule Luagents.ToolTest do
       assert Map.has_key?(tools, :pretty)
     end
 
-    test "creates tools with correct names" do
+    test "creates tools with correct names using scope" do
       tools = Tool.from_module(Luagents.Tools.Json)
 
-      assert tools.parse.name == "parse"
-      assert tools.encode.name == "encode"
-      assert tools.pretty.name == "pretty"
+      assert tools.parse.name == "json.parse"
+      assert tools.encode.name == "json.encode"
+      assert tools.pretty.name == "json.pretty"
     end
 
     test "extracts descriptions from @doc" do
@@ -182,12 +182,12 @@ defmodule Luagents.ToolTest do
       assert tools.pretty.api == Luagents.Tools.Json
     end
 
-    test "applies prefix option" do
-      tools = Tool.from_module(Luagents.Tools.Json, prefix: "json_")
+    test "uses module's scope for tool names" do
+      tools = Tool.from_module(Luagents.Tools.Json)
 
-      assert tools.parse.name == "json_parse"
-      assert tools.encode.name == "json_encode"
-      assert tools.pretty.name == "json_pretty"
+      assert tools.parse.name == "json.parse"
+      assert tools.encode.name == "json.encode"
+      assert tools.pretty.name == "json.pretty"
     end
 
     test "applies only option" do
@@ -224,10 +224,10 @@ defmodule Luagents.ToolTest do
   end
 
   describe "from_function/3" do
-    test "extracts single function from module" do
+    test "extracts single function from module using scope" do
       tool = Tool.from_function(Luagents.Tools.Json, :parse)
 
-      assert tool.name == "parse"
+      assert tool.name == "json.parse"
       assert tool.description == "Parse a JSON string into a Lua table."
       assert tool.api == Luagents.Tools.Json
     end
@@ -287,6 +287,7 @@ defmodule Luagents.ToolTest do
       tools = Tool.from_module(Luagents.Tools.Http)
 
       post_params = tools.post.parameters
+
       assert length(post_params) >= 3
 
       url_param = Enum.find(post_params, &(&1.name == "url"))
@@ -422,6 +423,100 @@ defmodule Luagents.ToolTest do
       tool = Tool.from_function(Luagents.Test.NoTypeInfo, :no_info)
 
       assert hd(tool.parameters).type == :string
+    end
+  end
+
+  describe "union type annotations" do
+    test "extracts union types from [type1|type2] annotations" do
+      tool = Tool.from_function(Luagents.Test.UnionTypeTools, :test_union_brackets)
+
+      assert length(tool.parameters) == 2
+      [body, data] = tool.parameters
+
+      assert body.name == "body"
+      assert body.type == [:string, :table]
+      assert body.description == "The request body (string or table)"
+
+      assert data.name == "data"
+      assert data.type == [:number, :string]
+      assert data.description == "Numeric or string data"
+    end
+
+    test "extracts union types from (type1|type2) annotations" do
+      tool = Tool.from_function(Luagents.Test.UnionTypeTools, :test_union_parens)
+
+      assert length(tool.parameters) == 2
+      [value, input] = tool.parameters
+
+      assert value.name == "value"
+      assert value.type == [:number, :boolean]
+      assert value.description == "A value that can be number or boolean"
+
+      assert input.name == "input"
+      assert input.type == [:string, :table, :number]
+      assert input.description == "Multi-type input"
+    end
+
+    test "single types still work as atoms" do
+      tool = Tool.from_function(Luagents.Test.UnionTypeTools, :test_single_type)
+
+      assert length(tool.parameters) == 2
+      [name, count] = tool.parameters
+
+      assert name.type == :string
+      assert count.type == :number
+    end
+
+    test "formats union types correctly in prompts" do
+      tool = Tool.from_function(Luagents.Test.UnionTypeTools, :test_union_brackets)
+      formatted = Tool.format_for_prompt(tool)
+
+      assert String.contains?(formatted, "body: string|table")
+      assert String.contains?(formatted, "data: number|string")
+    end
+
+    test "formats single types correctly in prompts" do
+      tool = Tool.from_function(Luagents.Test.UnionTypeTools, :test_single_type)
+      formatted = Tool.format_for_prompt(tool)
+
+      assert String.contains?(formatted, "name: string")
+      assert String.contains?(formatted, "count: number")
+    end
+
+    test "handles complex union types with 3+ types" do
+      tool = Tool.from_function(Luagents.Test.UnionTypeTools, :test_complex_union)
+
+      [config, items] = tool.parameters
+
+      assert config.type == [:string, :table, :boolean]
+      assert items.type == [:table, :string]
+    end
+
+    test "formats complex union types in prompts" do
+      tool = Tool.from_function(Luagents.Test.UnionTypeTools, :test_complex_union)
+      formatted = Tool.format_for_prompt(tool)
+
+      assert String.contains?(formatted, "config: string|table|boolean")
+      assert String.contains?(formatted, "items: table|string")
+    end
+  end
+
+  describe "HTTP tool union types" do
+    test "extracts union type from HTTP.put body parameter" do
+      tools = Tool.from_module(Luagents.Tools.Http)
+      put_params = tools.put.parameters
+
+      body_param = Enum.find(put_params, &(&1.name == "body"))
+      assert body_param != nil
+      assert body_param.type == [:string, :table]
+      assert body_param.description == "The request body (string or table)"
+    end
+
+    test "formats HTTP.put with union type correctly" do
+      tool = Tool.from_function(Luagents.Tools.Http, :put)
+      formatted = Tool.format_for_prompt(tool)
+
+      assert String.contains?(formatted, "body: string|table")
     end
   end
 end

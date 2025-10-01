@@ -7,19 +7,19 @@ defmodule Luagents.Test.LuaToolTestHelperTest do
   alias Luagents.Tool
 
   setup do
-    tools = Tool.from_module(Luagents.Tools.Logger, prefix: "log_")
+    tools = Tool.from_module(Luagents.Tools.Logger)
     lua = setup_lua_with_tools(tools)
     {:ok, lua: lua}
   end
 
   describe "setup_lua_with_tools/1" do
     test "can setup with multiple tool modules" do
-      logger_tools = Tool.from_module(Luagents.Tools.Logger, prefix: "log_")
-      json_tools = Tool.from_module(Luagents.Tools.Json, prefix: "json_")
+      logger_tools = Tool.from_module(Luagents.Tools.Logger)
+      json_tools = Tool.from_module(Luagents.Tools.Json)
 
       lua = setup_lua_with_tools([logger_tools, json_tools])
 
-      result = eval_lua(lua, "return json_encode({test = 'value'})")
+      result = eval_lua(lua, "return json.encode({test = 'value'})")
       assert is_binary(result)
       assert result =~ "test"
     end
@@ -39,7 +39,7 @@ defmodule Luagents.Test.LuaToolTestHelperTest do
     test "calls injected tool from Lua", %{lua: lua} do
       log =
         capture_log(fn ->
-          result = eval_lua(lua, "return log_info('test message')")
+          result = eval_lua(lua, "return log.info('test message')")
           assert result == nil
         end)
 
@@ -50,9 +50,9 @@ defmodule Luagents.Test.LuaToolTestHelperTest do
       log =
         capture_log([level: :debug], fn ->
           code = """
-          log_debug('debug msg')
-          log_info('info msg')
-          log_warning('warning msg')
+          log.debug('debug msg')
+          log.info('info msg')
+          log.warning('warning msg')
           return 'done'
           """
 
@@ -70,9 +70,10 @@ defmodule Luagents.Test.LuaToolTestHelperTest do
       assert result == nil
     end
 
-    test "handles Lua runtime error by logging and returning nil", %{lua: lua} do
+    test "handles Lua runtime error by returning error tuple", %{lua: lua} do
       result = eval_lua(lua, "error('test error')")
-      assert result == nil
+      assert {:error, error_msg} = result
+      assert error_msg =~ "test error"
     end
 
     test "returns error tuple on Lua syntax error", %{lua: lua} do
@@ -85,7 +86,7 @@ defmodule Luagents.Test.LuaToolTestHelperTest do
       log =
         capture_log(fn ->
           code = """
-          return log_log('info', 'user action', {user_id = 123, action = 'login'})
+          return log.log('info', 'user action', {user_id = 123, action = 'login'})
           """
 
           result = eval_lua(lua, code)
@@ -103,7 +104,7 @@ defmodule Luagents.Test.LuaToolTestHelperTest do
     end
 
     test "returns continue when no final_answer", %{lua: lua} do
-      {:continue, _state} = eval_lua_final(lua, "log_info('test')")
+      {:continue, _state} = eval_lua_final(lua, "log.info('test')")
     end
   end
 

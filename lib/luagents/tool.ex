@@ -22,7 +22,7 @@ defmodule Luagents.Tool do
 
   @type parameter :: %{
           name: String.t(),
-          type: :string | :number | :boolean | :table,
+          type: :string | :number | :boolean | :table | [atom()],
           description: String.t(),
           required: boolean()
         }
@@ -56,8 +56,17 @@ defmodule Luagents.Tool do
   defp format_parameters(parameters) do
     Enum.map_join(parameters, ", ", fn param ->
       required = if param.required, do: "", else: "?"
-      "#{param.name}#{required}: #{param.type}"
+      type_str = format_type(param.type)
+      "#{param.name}#{required}: #{type_str}"
     end)
+  end
+
+  defp format_type(type) when is_list(type) do
+    Enum.map_join(type, "|", &Atom.to_string/1)
+  end
+
+  defp format_type(type) when is_atom(type) do
+    Atom.to_string(type)
   end
 
   @doc """
@@ -67,20 +76,15 @@ defmodule Luagents.Tool do
   This is the recommended way to register deflua-based tools.
 
   ## Options
-    - `:prefix` - String prefix to add to all tool names (e.g., "json_")
     - `:only` - List of function names to include (atoms)
     - `:except` - List of function names to exclude (atoms)
     - `:param_types` - Map of parameter names (atoms) to types (:string, :number, :boolean, :table)
 
   ## Examples
 
-      # Generate all tools from a module
+      # Generate all tools from a module (uses module's scope)
       tools = Tool.from_module(Luagents.Tools.Json)
-      # => %{parse: %Tool{...}, encode: %Tool{...}, pretty: %Tool{...}}
-
-      # With prefix
-      tools = Tool.from_module(Luagents.Tools.Json, prefix: "json_")
-      # => %{parse: %Tool{name: "json_parse", ...}, ...}
+      # => %{parse: %Tool{name: "json.parse", ...}, encode: %Tool{name: "json.encode", ...}}
 
       # Only specific functions
       tools = Tool.from_module(Luagents.Tools.Json, only: [:parse, :encode])
@@ -109,18 +113,19 @@ defmodule Luagents.Tool do
   Create a tool from a specific function in a module.
 
   Automatically extracts metadata from the function's documentation.
+  Uses the module's scope to build the tool name.
 
   ## Options
-    - `:as` - Custom tool name (string)
+    - `:as` - Custom tool name (string) - overrides scope-based naming
     - `:param_types` - Map of parameter names (atoms) to types
 
   ## Examples
 
       tool = Tool.from_function(Luagents.Tools.Json, :parse)
-      # => %Tool{name: "parse", ...}
+      # => %Tool{name: "json.parse", ...}
 
       tool = Tool.from_function(Luagents.Tools.Json, :parse,
-        as: "json_parse",
+        as: "custom_parse",
         param_types: %{json_string: :string}
       )
 
@@ -175,7 +180,7 @@ defmodule Luagents.Tool do
   end
 
   defp build_tool_from_doc(module, {{:function, name, arity}, _, signatures, doc, _meta}, opts) do
-    tool_name = build_tool_name(name, opts)
+    tool_name = build_tool_name(module, name, opts)
     description = extract_description(doc)
 
     spec_types = extract_spec_types(module, name, arity)
@@ -187,15 +192,28 @@ defmodule Luagents.Tool do
     {name, tool}
   end
 
-  defp build_tool_name(func_name, opts) do
+  defp build_tool_name(module, func_name, opts) do
     custom_name = Keyword.get(opts, :as)
-    prefix = Keyword.get(opts, :prefix, "")
 
-    cond do
-      custom_name -> custom_name
-      prefix != "" -> "#{prefix}#{func_name}"
-      true -> Atom.to_string(func_name)
+    if custom_name do
+      custom_name
+    else
+      scope = extract_scope(module)
+      build_scoped_name(scope, func_name)
     end
+  end
+
+  defp extract_scope(module) do
+    module.scope()
+  rescue
+    UndefinedFunctionError -> []
+  end
+
+  defp build_scoped_name([], func_name), do: Atom.to_string(func_name)
+
+  defp build_scoped_name(scope, func_name) do
+    (scope ++ [Atom.to_string(func_name)])
+    |> Enum.join(".")
   end
 
   defp extract_description(%{"en" => doc_text}) when is_binary(doc_text) do
@@ -295,8 +313,9 @@ defmodule Luagents.Tool do
   #   "- string: The string to match"
   #   "- pattern [string]: The regex pattern"
   #   "- count (number): The count value"
+  #   "- body [string|table]: The request body (string or table)"
   defp parse_param_line(line) do
-    regex = ~r/^\s*-\s+(\w+)(?:\s*[\[\(](\w+)[\]\)])?\s*:\s*(.+)$/
+    regex = ~r/^\s*-\s+(\w+)(?:\s*[\[\(]([\w\|]+)[\]\)])?\s*:\s*(.+)$/
 
     case Regex.run(regex, line) do
       [_, name, "", description] ->
@@ -312,6 +331,18 @@ defmodule Luagents.Tool do
   end
 
   defp parse_type_string(type_str) do
+    # Check if it contains pipe character for union types
+    if String.contains?(type_str, "|") do
+      type_str
+      |> String.split("|")
+      |> Enum.map(&String.trim/1)
+      |> Enum.map(&parse_single_type/1)
+    else
+      parse_single_type(type_str)
+    end
+  end
+
+  defp parse_single_type(type_str) do
     normalized = String.downcase(type_str)
 
     cond do
