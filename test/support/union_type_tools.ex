@@ -3,7 +3,7 @@ defmodule Luagents.Test.UnionTypeTools do
   Test tools for union type annotations.
   """
 
-  use Lua.API
+  use Luagents.API
 
   @doc """
   Test union types with square brackets.

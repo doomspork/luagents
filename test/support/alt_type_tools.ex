@@ -3,7 +3,7 @@ defmodule Luagents.Test.AltTypeTools do
   Test tools for alternative type names.
   """
 
-  use Lua.API
+  use Luagents.API
 
   @doc """
   Test alternative type names.

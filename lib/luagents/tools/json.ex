@@ -9,7 +9,7 @@ defmodule Luagents.Tools.Json do
   Lua compatibility. Returns nil on error.
   """
 
-  use Lua.API, scope: "json"
+  use Luagents.API, scope: "json"
 
   @doc """
   Parse a JSON string into a Lua table.

@@ -3,7 +3,7 @@ defmodule Luagents.Test.NoTypeInfo do
   Test tools with no type information.
   """
 
-  use Lua.API
+  use Luagents.API
 
   @doc "Function with no type info"
   deflua no_info(param) do

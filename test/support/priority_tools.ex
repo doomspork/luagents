@@ -3,7 +3,7 @@ defmodule Luagents.Test.PriorityTools do
   Test tools for type priority resolution.
   """
 
-  use Lua.API
+  use Luagents.API
 
   @doc """
   Test type priority.

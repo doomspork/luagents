@@ -3,7 +3,7 @@ defmodule Luagents.Test.SpecTools do
   Test tools for @spec type extraction.
   """
 
-  use Lua.API
+  use Luagents.API
 
   @doc "Add two numbers"
   @spec add(integer(), integer()) :: {:ok, integer()}

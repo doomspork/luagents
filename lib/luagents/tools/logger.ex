@@ -17,7 +17,7 @@ defmodule Luagents.Tools.Logger do
       log.log("info", "User action", {user_id = 123})
   """
 
-  use Lua.API, scope: "log"
+  use Luagents.API, scope: "log"
 
   require Logger
 
