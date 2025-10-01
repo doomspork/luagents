@@ -236,19 +236,13 @@ defmodule Luagents.Test.LuaToolTestHelper do
         Lua.load_api(acc_state, api_module)
       end)
 
-    # Then create aliases/wrappers for prefixed names
+    # The Lua.load_api already loads functions with their scope,
+    # so no additional aliasing is needed for API-based tools.
+    # Only need to handle function-based tools.
     Enum.reduce(tools, state_with_apis, fn
-      {func_name, tool}, acc_state when is_atom(tool.api) ->
-        # If the tool name differs from function name (due to prefix), create an alias
-        func_name_str = Atom.to_string(func_name)
-
-        if tool.name != func_name_str do
-          # Get the loaded function and assign it to the prefixed name
-          {_, state_with_alias} = Lua.eval!(acc_state, "#{tool.name} = #{func_name}")
-          state_with_alias
-        else
-          acc_state
-        end
+      {_func_name, tool}, acc_state when is_atom(tool.api) ->
+        # API-based tools are already loaded via Lua.load_api with correct scope
+        acc_state
 
       {name, tool}, acc_state when is_function(tool.function) ->
         Lua.set!(acc_state, [to_string(name)], create_tool_wrapper(tool))

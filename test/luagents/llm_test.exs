@@ -5,6 +5,10 @@ defmodule Luagents.LLMTest do
   alias Luagents.LLM.{Anthropic, Ollama}
 
   describe "LLM factory" do
+    setup do
+      System.delete_env("ANTHROPIC_API_KEY")
+    end
+
     test "creates Anthropic LLM with explicit provider" do
       assert_raise ArgumentError, ~r/Anthropic API key not found/, fn ->
         LLM.new(provider: :anthropic, model: "claude-3-haiku-20240307")
