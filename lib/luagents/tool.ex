@@ -75,6 +75,10 @@ defmodule Luagents.Tool do
   Automatically extracts tool metadata from module documentation and function signatures.
   This is the recommended way to register deflua-based tools.
 
+  For modules using `Luagents.API`, this uses compile-time generated metadata for
+  optimal performance. For modules using `Lua.API` or other patterns, it falls back
+  to runtime doc parsing.
+
   ## Options
     - `:only` - List of function names to include (atoms)
     - `:except` - List of function names to exclude (atoms)
@@ -95,6 +99,67 @@ defmodule Luagents.Tool do
   """
   @spec from_module(module(), keyword()) :: %{atom() => t()}
   def from_module(module, opts \\ []) do
+    # Fast path: Use compile-time generated metadata if available
+    if function_exported?(module, :__luagent_tools__, 0) do
+      from_module_compiled(module, opts)
+    else
+      # Slow path: Runtime doc parsing for backward compatibility
+      from_module_via_docs(module, opts)
+    end
+  end
+
+  # Fast path: Use pre-compiled tool metadata
+  defp from_module_compiled(module, opts) do
+    only = Keyword.get(opts, :only)
+    except = Keyword.get(opts, :except, [])
+    param_types = Keyword.get(opts, :param_types, %{})
+
+    module.__luagent_tools__()
+    |> filter_tools(only, except)
+    |> Enum.map(&build_tool_from_metadata(&1, param_types))
+    |> Map.new()
+  end
+
+  defp filter_tools(tools, only, except) do
+    Enum.filter(tools, fn {name, _metadata} ->
+      (is_nil(only) or name in only) and name not in except
+    end)
+  end
+
+  defp build_tool_from_metadata({name, metadata}, param_types) do
+    parameters = apply_param_type_overrides(metadata.parameters, param_types)
+
+    tool = %__MODULE__{
+      name: metadata.name,
+      description: metadata.description,
+      parameters: parameters,
+      api: metadata.api
+    }
+
+    {name, tool}
+  end
+
+  defp apply_param_type_overrides(parameters, param_types) do
+    if map_size(param_types) > 0 do
+      Enum.map(parameters, &apply_param_override(&1, param_types))
+    else
+      parameters
+    end
+  end
+
+  defp apply_param_override(param, param_types) do
+    param_atom = String.to_atom(param.name)
+    override_type = Map.get(param_types, param_atom)
+
+    if override_type do
+      %{param | type: override_type}
+    else
+      param
+    end
+  end
+
+  # Slow path: Runtime doc parsing (backward compatible)
+  defp from_module_via_docs(module, opts) do
     case Code.fetch_docs(module) do
       {:docs_v1, _, :elixir, _, _, _, docs} ->
         docs

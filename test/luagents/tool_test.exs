@@ -154,12 +154,12 @@ defmodule Luagents.ToolTest do
     test "extracts parameter names from signatures" do
       tools = Tool.from_module(Luagents.Tools.Json)
 
-      # JSON tools now have state parameter, so 2 params but only 1 user-facing
-      assert length(tools.parse.parameters) == 2
+      # JSON tools have deflua state parameter which is automatically filtered out
+      assert length(tools.parse.parameters) == 1
       assert hd(tools.parse.parameters).name == "json_string"
       assert hd(tools.parse.parameters).required == true
 
-      assert length(tools.encode.parameters) == 2
+      assert length(tools.encode.parameters) == 1
       assert hd(tools.encode.parameters).name == "data"
       assert hd(tools.encode.parameters).required == true
 

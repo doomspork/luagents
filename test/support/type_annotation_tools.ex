@@ -3,7 +3,7 @@ defmodule Luagents.Test.TypeAnnotationTools do
   Test tools for type annotation extraction.
   """
 
-  use Lua.API
+  use Luagents.API
 
   @doc """
   Process data with type annotations.
