@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: doomspork/actions-conventional-commits@v1.5
+      - uses: OneGlobe/actions-conventional-commits@v1.5
         with:
           include-pull-request-title: true
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
